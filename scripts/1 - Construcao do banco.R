@@ -56,7 +56,7 @@ tbl_Morador_info <- tbl_Morador_info %>%
          PlanoSaude = V0406,
          ANOS_ESTUDO,
          COMPOSICAO,
-         RENDA_TOTAL, UF)
+         RENDA_TOTAL, UF, PESO_FINAL)
 
 tbl_despBebidas <- tbl_caderneta %>%
   filter(V9001 %in% Produtos_sugar_tax$ID_ITEM)
@@ -106,8 +106,8 @@ tbl_Morador_info$COMPOSICAO <- factor(tbl_Morador_info$COMPOSICAO, levels = lvl,
 tbl_despBebidas2 <- tbl_despBebidas %>%
   select(COD_UPA, NUM_DOM, NUM_UC, Prod = V9001, Valor = V8000, RENDA_TOTAL, QTD_FINAL) %>%
   group_by(COD_UPA, NUM_DOM, NUM_UC, Prod) %>%
-  summarise(VALOR_FINAL = sum(Valor),
-            QTD_FINAL = sum(Valor),
+  summarise(VALOR_FINAL = sum(Valor, na.rm = TRUE),
+            QTD_FINAL = sum(QTD_FINAL, na.rm = TRUE),
             .groups = "drop") %>%
   inner_join(Produtos_sugar_tax, by=c("Prod" = "ID_ITEM"))
 
@@ -116,8 +116,8 @@ summary(tbl_despBebidas2)
 tbl_despTotalAlimentos2 <- tbl_despTotalAlimentos %>%
   select(COD_UPA, NUM_DOM, NUM_UC, Prod = V9001, Valor = V8000, QTD_FINAL) %>%
   group_by(COD_UPA, NUM_DOM, NUM_UC) %>%
-  summarise(Valor_Alimentos = sum(Valor),
-            Qtd_Alimentos = sum(Valor),
+  summarise(Valor_TotalEmAlimentos = sum(Valor, na.rm = TRUE),
+            Qtd_TotalEmAlimentos = sum(QTD_FINAL, na.rm = TRUE),
             .groups = "drop")
 
 
@@ -130,7 +130,36 @@ full <- tbl_despBebidas2 %>%
             by = c("COD_UPA", "NUM_DOM", "NUM_UC"))
 
 
-readr::write_excel_csv(full, "Dados_Estudo.csv")
+sum(is.na(full$Valor_TotalEmAlimentos))
+sum(is.na(full$Qtd_TotalEmAlimentos))
+
+
+full$Valor_TotalEmAlimentos[is.na(full$Valor_TotalEmAlimentos)] <- 0
+full$Qtd_TotalEmAlimentos[is.na(full$Qtd_TotalEmAlimentos)] <- 0
+
+
+saveRDS(object = full, file = "./database/Dados_Estudo.rds")
+readr::write_excel_csv(full, "./database/Dados_Estudo.csv")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
