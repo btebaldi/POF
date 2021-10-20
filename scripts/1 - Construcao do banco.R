@@ -43,7 +43,7 @@ tbl_Morador_info <- tbl_morador %>% filter(V0306 == 1)
 tbl_caderneta$V8000[tbl_caderneta$V8000 == 9999999.99] <- NA
 
 # Por enquanto retiro da base esses caras que nao tem info de preco
-tbl_caderneta <- tbl_caderneta %>% filter(!is.na(V8000))
+# tbl_caderneta <- tbl_caderneta %>% filter(!is.na(V8000))
 
 # Data Selection ----------------------------------------------------------
 
@@ -56,7 +56,7 @@ tbl_Morador_info <- tbl_Morador_info %>%
          PlanoSaude = V0406,
          ANOS_ESTUDO,
          COMPOSICAO,
-         RENDA_TOTAL, UF, PESO_FINAL)
+         RENDA_TOTAL, UF, PESO_FINAL, PESO)
 
 tbl_despBebidas <- tbl_caderneta %>%
   filter(V9001 %in% Produtos_sugar_tax$ID_ITEM)
@@ -104,9 +104,10 @@ tbl_Morador_info$COMPOSICAO <- factor(tbl_Morador_info$COMPOSICAO, levels = lvl,
 # Label de variaveis (tabela Bebidas) -------------------------------------
 
 tbl_despBebidas2 <- tbl_despBebidas %>%
-  select(COD_UPA, NUM_DOM, NUM_UC, Prod = V9001, Valor = V8000, RENDA_TOTAL, QTD_FINAL) %>%
+  select(COD_UPA, NUM_DOM, NUM_UC, Prod = V9001, Valor = V8000, Valor_defla=V8000_DEFLA, RENDA_TOTAL, QTD_FINAL) %>%
   group_by(COD_UPA, NUM_DOM, NUM_UC, Prod) %>%
   summarise(VALOR_FINAL = sum(Valor, na.rm = TRUE),
+            VALOR_FINAL_defla = sum(Valor_defla, na.rm = TRUE),
             QTD_FINAL = sum(QTD_FINAL, na.rm = TRUE),
             .groups = "drop") %>%
   inner_join(Produtos_sugar_tax, by=c("Prod" = "ID_ITEM"))
@@ -140,9 +141,6 @@ full$Qtd_TotalEmAlimentos[is.na(full$Qtd_TotalEmAlimentos)] <- 0
 
 saveRDS(object = full, file = "./database/Dados_Estudo.rds")
 readr::write_excel_csv(full, "./database/Dados_Estudo.csv")
-
-
-
 
 
 
