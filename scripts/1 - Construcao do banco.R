@@ -104,8 +104,8 @@ tbl_Morador_info$COMPOSICAO <- factor(tbl_Morador_info$COMPOSICAO, levels = lvl,
 # Label de variaveis (tabela Bebidas) -------------------------------------
 
 tbl_despBebidas2 <- tbl_despBebidas %>%
-  select(COD_UPA, NUM_DOM, NUM_UC, Prod = V9001, Valor = V8000, Valor_defla=V8000_DEFLA, RENDA_TOTAL, QTD_FINAL) %>%
-  group_by(COD_UPA, NUM_DOM, NUM_UC, Prod) %>%
+  select(UF, COD_UPA, NUM_DOM, NUM_UC, Prod = V9001, Valor = V8000, Valor_defla=V8000_DEFLA, RENDA_TOTAL, QTD_FINAL) %>%
+  group_by(UF, COD_UPA, NUM_DOM, NUM_UC, Prod) %>%
   summarise(VALOR_FINAL = sum(Valor, na.rm = TRUE),
             VALOR_FINAL_defla = sum(Valor_defla, na.rm = TRUE),
             QTD_FINAL = sum(QTD_FINAL, na.rm = TRUE),
@@ -115,8 +115,8 @@ tbl_despBebidas2 <- tbl_despBebidas %>%
 summary(tbl_despBebidas2)
 
 tbl_despTotalAlimentos2 <- tbl_despTotalAlimentos %>%
-  select(COD_UPA, NUM_DOM, NUM_UC, Prod = V9001, Valor = V8000, QTD_FINAL) %>%
-  group_by(COD_UPA, NUM_DOM, NUM_UC) %>%
+  select(UF, COD_UPA, NUM_DOM, NUM_UC, Prod = V9001, Valor = V8000, QTD_FINAL) %>%
+  group_by(UF, COD_UPA, NUM_DOM, NUM_UC) %>%
   summarise(Valor_TotalEmAlimentos = sum(Valor, na.rm = TRUE),
             Qtd_TotalEmAlimentos = sum(QTD_FINAL, na.rm = TRUE),
             .groups = "drop")
@@ -126,9 +126,9 @@ tbl_despTotalAlimentos2 <- tbl_despTotalAlimentos %>%
 
 full <- tbl_despBebidas2 %>%
   left_join(tbl_Morador_info,
-            by = c("COD_UPA", "NUM_DOM", "NUM_UC")) %>% 
+            by = c("UF"="UF", "COD_UPA", "NUM_DOM", "NUM_UC")) %>% 
   left_join(tbl_despTotalAlimentos2,
-            by = c("COD_UPA", "NUM_DOM", "NUM_UC"))
+            by = c("UF"="UF", "COD_UPA", "NUM_DOM", "NUM_UC"))
 
 
 sum(is.na(full$Valor_TotalEmAlimentos))
@@ -141,25 +141,5 @@ full$Qtd_TotalEmAlimentos[is.na(full$Qtd_TotalEmAlimentos)] <- 0
 
 saveRDS(object = full, file = "./database/Dados_Estudo.rds")
 readr::write_excel_csv(full, "./database/Dados_Estudo.csv")
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 

@@ -11,6 +11,7 @@ rm(list = ls())
 
 library(readr)
 library(dplyr)
+library(ggplot2)
 
 # Data load ---------------------------------------------------------------
 
@@ -44,7 +45,7 @@ tbl_Bebidas_UC_Produto <- tbl %>%
   summarise(qtd=n(), .groups = "drop") %>% 
   group_by(CATEGORIA) %>% 
   summarise(Num_Domicilios=n(), .groups = "drop")
-  
+
 tbl_Bebidas_UC_Produto <- tbl_Bebidas_UC_Produto %>% 
   add_row(CATEGORIA = " Total", Num_Domicilios = Total_domiciliosProdutoSelecionados)
 
@@ -53,7 +54,7 @@ tbl_Bebidas_UC_Produto <- tbl_Bebidas_UC_Produto %>%
          Perc_TotalBebida =  100*Num_Domicilios/Total_domiciliosProdutoSelecionados)
 
 tbl_Bebidas_UC_Produto
-  
+
 readr::write_excel_csv(tbl_Bebidas_UC_Produto, "./database/Export/Tabela3.csv")
 
 
@@ -88,6 +89,47 @@ tbl_Gasto_Bebidas_UC_Produto <- tbl_Gasto_Bebidas_UC_Produto %>%
 
 # tbl_Gasto_Bebidas_UC_Produto$VALOR <- NULL
 tbl_Gasto_Bebidas_UC_Produto
+
+
+my_labels <- c(
+  "Leite",
+  "Refrigerante", 
+  "Café e Chá", 
+  "Bebida ad. a base de leite", 
+  "Outras bebidas adoçadas", 
+  "Água", 
+  "Suco Natural",
+  "Refrigerante Dietético",
+  "Isotônico e Energético"
+)
+
+my_levels <- c(
+  "Leite",
+  "Refrigerante", 
+  "Café e Chá", 
+  "Bebida Láctea", 
+  "Bebida de Fruta", 
+  "Água", 
+  "Suco Natural",
+  "Refrigerante Dietético",
+  "Isotônico e Energético"
+)
+
+tbl_Gasto_Bebidas_UC_Produto %>% 
+  mutate(CATEGORIA = factor(CATEGORIA, levels = my_levels, labels = my_labels, ordered = TRUE)) %>% 
+  filter(!is.na(CATEGORIA)) %>% 
+  ggplot() + 
+  geom_col(aes(x=CATEGORIA, y = Part_TotalGastosComBebida, fill=CATEGORIA), orientation="NULL") +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
+  theme(#axis.title.x=element_blank()
+    axis.text.x=element_blank(),
+    # axis.ticks.x=element_blank(),
+    # axis.title.y=element_text("s")
+  ) +
+  labs(title = "Participação Média no Gasto com Bebidas não Alcóolicas – POF 2017/2018",
+       x=NULL, y = "%", caption = "Elaboração própria")
+
 
 readr::write_excel_csv(tbl_Bebidas_UC_Produto, "./database/Export/Tabela4.csv")
 
@@ -132,5 +174,99 @@ tbl_Bebidas_UC_Produto
 readr::write_excel_csv(tbl_Bebidas_UC_Produto, "./database/Export/Tabela4-peso.csv")
 
 
+
+# asasas ------------------------------------------------------------------
+
+
+tbl %>% 
+  group_by(COD_UPA,
+           NUM_DOM,
+           NUM_UC) %>%
+  summarise(RENDA_TOTAL =mean(RENDA_TOTAL),
+            # RENDA_TOTAL2 =max(RENDA_TOTAL),
+            .groups = "drop") %>%
+  pull(RENDA_TOTAL) %>% 
+  quantile() -> myquantile
+
+for (var in 2:5) {
+  q0 <- myquantile[var-1]
+  q1 <- myquantile[var]
+  aux <- tbl %>% filter(RENDA_TOTAL > q0, RENDA_TOTAL<=q1)
+  
+  tbl2 <- tbl %>% 
+    # filter(COD_UPA %in% aux$COD_UPA,
+    #        NUM_DOM %in% aux$NUM_DOM, 
+    #        NUM_UC %in% aux$NUM_UC) %>% 
+    filter(RENDA_TOTAL > q0, RENDA_TOTAL<=q1) %>% 
+    # group_by(COD_UPA, NUM_DOM, NUM_UC, CATEGORIA) %>% 
+    # summarise(VALOR=sum(VALOR_FINAL, na.rm = TRUE), .groups = "drop") %>% 
+    group_by(CATEGORIA) %>% 
+    summarise(VALOR=sum(VALOR_FINAL, na.rm = TRUE), .groups = "drop") %>% 
+    mutate(#Perc_Total =  100*VALOR/Total_GastosDomicilios,
+      # Perc_Total =  VALOR,
+      # xpto = sum(VALOR),
+      # Part_TotalGastosComBebida =  100*VALOR/sum(VALOR)) %>%
+      Part_TotalGastosComBebida =  100*VALOR/Total_GastosEmBebidas) %>%
+    mutate(CATEGORIA = factor(CATEGORIA, levels = my_levels, labels = my_labels, ordered = TRUE))
+  
+  if(var == 2){
+    tbl3 <- tbl2
+    tbl3$VALOR <- var
+  } else {
+    tbl3 <- tbl3 %>% dplyr::bind_rows(tbl2)
+    tbl3$VALOR[tbl3$VALOR>5] <- var
+  }
+}
+
+
+tbl3 %>% 
+  ggplot() + 
+  geom_col(aes(x=CATEGORIA, y = Part_TotalGastosComBebida, fill=CATEGORIA), orientation="NULL") +
+  facet_wrap(.~VALOR, nrow = 1) +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
+  theme(#axis.title.x=element_blank()
+    axis.text.x=element_blank(),
+    # axis.ticks.x=element_blank(),
+    # axis.title.y=element_text("s")
+  ) +
+  labs(title = "Participação Média no Gasto com Bebidas não Alcóolicas – POF 2017/2018",
+       x=NULL, y = "%", caption = "Elaboração própria")
+
+
+
+
+# As tabelas a seguir mostram as estatísticas descritivas dos preços médios dos
+# produtos, a quantidade consumida agregada total e o valor total do consumo,
+# por categoria. Estas tabelas apresentam os resultados desagregados por região
+# geográfica.
+
+library(tidyr)
+tbl %>% 
+  select(UF, COD_UPA, NUM_DOM, NUM_UC, VALOR_FINAL, QTD_FINAL, Prod, CATEGORIA) %>% 
+  mutate(Regiao = trunc(UF/10),
+    Preco = VALOR_FINAL/QTD_FINAL) %>% 
+  group_by(Regiao, CATEGORIA) %>% 
+  summarise(Preco_final = mean(Preco), .groups="drop") %>% 
+  mutate(Regiao = factor(Regiao, levels = 1:5, labels = c("N", "NE", "SE", "S", "CO"))) %>% 
+  pivot_wider(names_from = Regiao, values_from = Preco_final)
+
+
+
+tbl %>% 
+  select(UF, COD_UPA, NUM_DOM, NUM_UC, VALOR_FINAL, QTD_FINAL, Prod, CATEGORIA, PESO) %>% 
+  mutate(Regiao = trunc(UF/10)) %>% 
+  group_by(Regiao, CATEGORIA) %>% 
+  summarise(QTD = sum(QTD_FINAL*PESO), .groups="drop") %>% 
+  mutate(Regiao = factor(Regiao, levels = 1:5, labels = c("N", "NE", "SE", "S", "CO"))) %>% 
+  pivot_wider(names_from = Regiao, values_from = QTD)
+
+tbl %>% 
+  select(UF, COD_UPA, NUM_DOM, NUM_UC, VALOR_FINAL, QTD_FINAL, Prod, CATEGORIA) %>% 
+  mutate(Regiao = trunc(UF/10)) %>% 
+  group_by(Regiao, CATEGORIA) %>% 
+  summarise(QTD = sum(VALOR_FINAL), .groups="drop") %>% 
+  mutate(Regiao = factor(Regiao, levels = 1:5, labels = c("N", "NE", "SE", "S", "CO"))) %>% 
+  pivot_wider(names_from = Regiao, values_from = QTD)
 
 
