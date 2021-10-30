@@ -21,7 +21,8 @@ tbl_caderneta <-  as_tibble(tbl_caderneta)
 summary(tbl_caderneta)
 
 
-Produtos_sugar_tax <- read_excel("./database/Produtos sugar tax.xlsx")
+Produtos_sugar_tax <- read_excel("./database/Produtos sugar tax.xlsx",
+                                 range = cell_limits(ul = c(1,1), lr = c(NA,4)))
 colnames(Produtos_sugar_tax) <-  c("ID", "CATEGORIA", "ID_ITEM", "NOME_PRODUTO")
 
 Produtos_alimentar <- read_excel("./database/Cadastro de Produtos do Consumo Alimentar.xls")
@@ -105,7 +106,7 @@ tbl_Morador_info$COMPOSICAO <- factor(tbl_Morador_info$COMPOSICAO, levels = lvl,
 
 tbl_despBebidas2 <- tbl_despBebidas %>%
   select(UF, COD_UPA, NUM_DOM, NUM_UC, Prod = V9001, Valor = V8000, Valor_defla=V8000_DEFLA, RENDA_TOTAL, QTD_FINAL) %>%
-  group_by(UF, COD_UPA, NUM_DOM, NUM_UC, Prod) %>%
+  group_by(UF, COD_UPA, NUM_DOM, Prod) %>%
   summarise(VALOR_FINAL = sum(Valor, na.rm = TRUE),
             VALOR_FINAL_defla = sum(Valor_defla, na.rm = TRUE),
             QTD_FINAL = sum(QTD_FINAL, na.rm = TRUE),
@@ -116,7 +117,7 @@ summary(tbl_despBebidas2)
 
 tbl_despTotalAlimentos2 <- tbl_despTotalAlimentos %>%
   select(UF, COD_UPA, NUM_DOM, NUM_UC, Prod = V9001, Valor = V8000, QTD_FINAL) %>%
-  group_by(UF, COD_UPA, NUM_DOM, NUM_UC) %>%
+  group_by(UF, COD_UPA, NUM_DOM) %>%
   summarise(Valor_TotalEmAlimentos = sum(Valor, na.rm = TRUE),
             Qtd_TotalEmAlimentos = sum(QTD_FINAL, na.rm = TRUE),
             .groups = "drop")
@@ -126,9 +127,9 @@ tbl_despTotalAlimentos2 <- tbl_despTotalAlimentos %>%
 
 full <- tbl_despBebidas2 %>%
   left_join(tbl_Morador_info,
-            by = c("UF"="UF", "COD_UPA", "NUM_DOM", "NUM_UC")) %>% 
+            by = c("UF"="UF", "COD_UPA", "NUM_DOM")) %>% 
   left_join(tbl_despTotalAlimentos2,
-            by = c("UF"="UF", "COD_UPA", "NUM_DOM", "NUM_UC"))
+            by = c("UF"="UF", "COD_UPA", "NUM_DOM"))
 
 
 sum(is.na(full$Valor_TotalEmAlimentos))

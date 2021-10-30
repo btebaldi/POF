@@ -31,17 +31,18 @@ tbl_caderneta$V8000[tbl_caderneta$V8000 == 9999999.99] <- NA
 # Data Analisys - Tabela 3 ------------------------------------------------
 
 Total_domicilios <- tbl_caderneta %>%
-  group_by(COD_UPA, NUM_DOM, NUM_UC) %>% 
+  group_by(COD_UPA, NUM_DOM) %>% 
   summarise(qtd=n(), .groups = "drop") %>% nrow()
 
+
 tbl_Bebidas_UC <- tbl %>% 
-  group_by(COD_UPA, NUM_DOM, NUM_UC) %>% 
+  group_by(COD_UPA, NUM_DOM) %>% 
   summarise(qtd=n(), .groups = "drop")
 
 Total_domiciliosProdutoSelecionados <- nrow(tbl_Bebidas_UC)
 
 tbl_Bebidas_UC_Produto <- tbl %>% 
-  group_by(COD_UPA, NUM_DOM, NUM_UC, CATEGORIA) %>% 
+  group_by(COD_UPA, NUM_DOM, CATEGORIA) %>% 
   summarise(qtd=n(), .groups = "drop") %>% 
   group_by(CATEGORIA) %>% 
   summarise(Num_Domicilios=n(), .groups = "drop")
@@ -53,7 +54,7 @@ tbl_Bebidas_UC_Produto <- tbl_Bebidas_UC_Produto %>%
   mutate(Perc_Total =  100*Num_Domicilios/Total_domicilios,
          Perc_TotalBebida =  100*Num_Domicilios/Total_domiciliosProdutoSelecionados)
 
-tbl_Bebidas_UC_Produto
+tbl_Bebidas_UC_Produto[c(1,5,2,3,4,6,7,8,9,10), ]
 
 readr::write_excel_csv(tbl_Bebidas_UC_Produto, "./database/Export/Tabela3.csv")
 
@@ -62,21 +63,18 @@ readr::write_excel_csv(tbl_Bebidas_UC_Produto, "./database/Export/Tabela3.csv")
 
 tbl_GastoTotal_UCs <- tbl_caderneta %>% 
   group_by(COD_UPA,
-           NUM_DOM,
-           NUM_UC) %>% 
+           NUM_DOM) %>% 
   summarise(TotalGastos=sum(V8000, na.rm = TRUE), .groups = "drop")
 
 Total_GastosDomicilios <- sum(tbl_GastoTotal_UCs$TotalGastos)
 
 tbl_GastosBebidas_UC <- tbl %>% 
-  group_by(COD_UPA, NUM_DOM, NUM_UC) %>% 
+  group_by(COD_UPA, NUM_DOM) %>% 
   summarise(VALOR=sum(VALOR_FINAL, na.rm = TRUE), .groups = "drop")
 
 Total_GastosEmBebidas <- sum(tbl_GastosBebidas_UC$VALOR)
 
 tbl_Gasto_Bebidas_UC_Produto <- tbl %>% 
-  group_by(COD_UPA, NUM_DOM, NUM_UC, CATEGORIA) %>% 
-  summarise(VALOR=sum(VALOR_FINAL, na.rm = TRUE), .groups = "drop") %>% 
   group_by(CATEGORIA) %>% 
   summarise(VALOR=sum(VALOR, na.rm = TRUE), .groups = "drop")
 
@@ -88,8 +86,7 @@ tbl_Gasto_Bebidas_UC_Produto <- tbl_Gasto_Bebidas_UC_Produto %>%
          Part_TotalGastosComBebida =  100*VALOR/Total_GastosEmBebidas)
 
 # tbl_Gasto_Bebidas_UC_Produto$VALOR <- NULL
-tbl_Gasto_Bebidas_UC_Produto
-
+tbl_Gasto_Bebidas_UC_Produto[c(1,5,2,3,4,6,7,8,9,10), ]
 
 my_labels <- c(
   "Leite",
