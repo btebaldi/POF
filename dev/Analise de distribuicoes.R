@@ -91,6 +91,11 @@ ggplot(tbl_caderneta_coletiva_resumo) +
        y="Consome Refrigerante",
        caption = "Fonte: POF 2017/2018")
 
+ggsave(filename = "Grafico_1.png",
+       path = "Exports",
+       width = 8,
+       height = 6)
+
 ggplot(tbl_caderneta_coletiva_resumo) +
   geom_boxplot(aes(x=Ln_ValorTotal, y=ConsomeRefri)) + 
   labs(title = "Boxplot - Log. Neperiano do valor total gasto por domicilio",
@@ -99,6 +104,10 @@ ggplot(tbl_caderneta_coletiva_resumo) +
        y=NULL,
        caption = "Fonte: POF 2017/2018")
 
+ggsave(filename = "Grafico_2.png",
+       path = "Exports",
+       width = 8,
+       height = 6)
 
 ggplot(tbl_caderneta_coletiva_resumo) +
   geom_density(aes(x=ValorTotal), colour="black", fill="blue", alpha = 0.5) +
@@ -108,6 +117,11 @@ ggplot(tbl_caderneta_coletiva_resumo) +
        x="Reais",
        y=NULL,
        caption = "Fonte: POF 2017/2018")
+
+ggsave(filename = "Grafico_3.png",
+       path = "Exports",
+       width = 8,
+       height = 6)
 
 ggplot(tbl_caderneta_coletiva_resumo) +
   # geom_histogram(aes(x=log(ValorTotal), y=..density..), colour="black", fill="blue", alpha = 0.5) +
@@ -120,6 +134,10 @@ ggplot(tbl_caderneta_coletiva_resumo) +
        y=NULL,
        caption = "Fonte: POF 2017/2018")
 
+ggsave(filename = "Grafico_4.png",
+       path = "Exports",
+       width = 8,
+       height = 6)
 
 ggplot(tbl_caderneta_coletiva_resumo) +
   # geom_histogram(aes(x=log(ValorTotal), y=..density..), colour="black", fill="blue", alpha = 0.5) + 
@@ -130,6 +148,10 @@ ggplot(tbl_caderneta_coletiva_resumo) +
        y=NULL,
        caption = "Fonte: POF 2017/2018")
 
+ggsave(filename = "Grafico_5.png",
+       path = "Exports",
+       width = 8,
+       height = 6)
 
 ggplot(tbl_caderneta_coletiva_resumo) +
   # geom_histogram(aes(x=log(ValorTotal), y=..density..), colour="black", fill="blue", alpha = 0.5) + 
@@ -140,7 +162,10 @@ ggplot(tbl_caderneta_coletiva_resumo) +
        y=NULL,
        caption = "Fonte: POF 2017/2018")
 
-
+ggsave(filename = "Grafico_6.png",
+       path = "Exports",
+       width = 8,
+       height = 6)
 
 #' Dentre os que possuem consumo positivo, qual é a distribuição do consumo (em
 #' R$ e em quantidade, litros)?
@@ -157,6 +182,11 @@ ggplot(tbl) +
        y="Consome Refrigerante",
        caption = "Fonte: POF 2017/2018")
 
+ggsave(filename = "Grafico_7.png",
+       path = "Exports",
+       width = 8,
+       height = 6)
+
 ggplot(tbl) +
   geom_boxplot(aes(x=Ln_ValorEmRefri)) + 
   labs(title = "Boxplot - Log. Neperiano do valor total gasto por domicilio em refrigerante",
@@ -165,6 +195,11 @@ ggplot(tbl) +
        y=NULL,
        caption = "Fonte: POF 2017/2018")
 
+ggsave(filename = "Grafico_8.png",
+       path = "Exports",
+       width = 8,
+       height = 6)
+
 ggplot(tbl) +
   geom_histogram(aes(x=Ln_ValorEmRefri, y = ..density..), colour="black", fill="orange", alpha = 0.5) +
   labs(title = "Densidade - Valor Total gasto por Domicilio em refrigerante",
@@ -172,6 +207,11 @@ ggplot(tbl) +
        x="Ln(Reais)",
        y=NULL,
        caption = "Fonte: POF 2017/2018")
+
+ggsave(filename = "Grafico_9.png",
+       path = "Exports",
+       width = 8,
+       height = 6)
 
 
 ggplot(tbl) +
@@ -182,6 +222,11 @@ ggplot(tbl) +
        y=NULL,
        caption = "Fonte: POF 2017/2018")
 
+ggsave(filename = "Grafico_10.png",
+       path = "Exports",
+       width = 8,
+       height = 6)
+
 ggplot(tbl) +
   geom_histogram(aes(x=log(Qtd), y = ..density..), colour="black", fill="orange", alpha = 0.5) +
   labs(title = "Densidade - Log. Neperiano da quantdade (KG) consumida por Domicilio em refrigerante",
@@ -190,6 +235,10 @@ ggplot(tbl) +
        y=NULL,
        caption = "Fonte: POF 2017/2018")
 
+ggsave(filename = "Grafico_11.png",
+       path = "Exports",
+       width = 8,
+       height = 6)
 
 #' Vamos definir quem é o domicílio consumidor de refrigerantes (depois de olhar
 #' 1 e 2).
@@ -226,6 +275,10 @@ ggplot(tbl) +
        fill=NULL,
        caption = "Fonte: POF 2017/2018")
 
+ggsave(filename = "Grafico_12.png",
+       path = "Exports",
+       width = 8,
+       height = 6)
 
 ggplot(tbl) +
   # geom_histogram(aes(x=V0404, y = ..density..)) +
@@ -237,6 +290,10 @@ ggplot(tbl) +
        fill=NULL,
        caption = "Fonte: POF 2017/2018")
 
+ggsave(filename = "Grafico_13.png",
+       path = "Exports",
+       width = 8,
+       height = 6)
 
 
 # Anos de estudo da pessoa. Variável derivada, construída a partir dos quesitos referentes a educação. 
@@ -253,6 +310,10 @@ ggplot(tbl) +
        fill=NULL,
        caption = "Fonte: POF 2017/2018")
 
+ggsave(filename = "Grafico_14.png",
+       path = "Exports",
+       width = 8,
+       height = 6)
 
 ggplot(tbl) +
   geom_histogram(aes(x=RENDA_TOTAL,
@@ -264,6 +325,11 @@ ggplot(tbl) +
        y=NULL,
        fill=NULL,
        caption = "Fonte: POF 2017/2018")
+
+ggsave(filename = "Grafico_15.png",
+       path = "Exports",
+       width = 8,
+       height = 6)
 
 
 ggplot(tbl) +
@@ -278,7 +344,10 @@ ggplot(tbl) +
        caption = "Fonte: POF 2017/2018")
 
 
-
+ggsave(filename = "Grafico_16.png",
+       path = "Exports",
+       width = 8,
+       height = 6)
 
 
 
