@@ -102,7 +102,7 @@ tbl_1.2 <- tbl_1 %>%
   group_by(Coluna1) %>% 
   summarise(ValorTotal= sum(V8000_DEFLA, na.rm = TRUE), .groups = "drop")
 
-write.csv2(x = tbl_1.1,
+write.csv2(x = tbl_1.2,
            file = "distribuicao condicional produtos.csv")
 
 # Incondicional para consumo dos grupos  
@@ -125,7 +125,9 @@ tbl_2.2 <- tbl_1 %>%
 library(haven)
 
 
-caderneta <- read_dta("K:/OneDrive - FGV/POF/2007_2008/POF_KELLY/Kelly Gonçalves - pof2008_tr11.dta")
+# caderneta <- read_dta("K:/OneDrive - FGV/POF/2007_2008/POF_KELLY/Kelly Gonçalves - pof2008_tr11.dta")
+caderneta <- read_dta("D:/OneDrive - FGV/POF/2007_2008/POF_KELLY/Kelly Gonçalves - pof2008_tr11.dta")
+
 head(caderneta)
 
 caderneta <- caderneta %>% mutate(COD_UPA = (cod_uf * 1000 + num_seq)*10 + num_dv,
@@ -166,7 +168,7 @@ tbl_1.2 <- tbl_1 %>%
   group_by(Coluna1) %>% 
   summarise(ValorTotal= sum(V8000_DEFLA, na.rm = TRUE), .groups = "drop")
 
-write.csv2(x = tbl_1.1,
+write.csv2(x = tbl_1.2,
            file = "distribuicao condicional produtos (2007).csv")
 
 # Incondicional para consumo dos grupos  
