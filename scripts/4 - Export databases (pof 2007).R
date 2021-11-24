@@ -92,7 +92,30 @@ tbl_morador <- tbl_morador %>%
 final_tbl <- tbl_morador %>% 
   select(COD_UPA, NUM_DOM, NUM_UC,  
          idade_anos, cod_sexo, anos_de_estudo, renda_total) %>% 
-  right_join(caderneta)
+  right_join(caderneta) %>%
+  left_join(Produtos_Estudo_Sugar_Tax,
+            by = c("cod_item" = "CODIGO_DO_PRODUTO")) %>% 
+  select(COD_UPA, NUM_DOM, NUM_UC,  
+         idade_anos,
+         cod_sexo,
+         anos_de_estudo,
+         renda_total,
+         cod_item, 
+         valor,
+         qtd,
+         isRefri,
+         is_UC_ComRefri,
+         Grupo_FIPE,
+         Grupo_POF1 = Coluna1,
+         Grupo_POF2 = Grupo_POF)
+
+final_tbl$preco <- final_tbl$valor/final_tbl$qtd
+final_tbl$preco_corrigido <- final_tbl$preco*1.81316570
+final_tbl$valor_corrigido <- final_tbl$valor*1.81316570
+
+final_tbl$Grupo_FIPE[is.na(final_tbl$Grupo_FIPE)] <- "Outros"
+final_tbl$Grupo_POF1[is.na(final_tbl$Grupo_POF1)] <- "Outros"
+final_tbl$Grupo_POF2[is.na(final_tbl$Grupo_POF2)] <- "Outros"
 
 write.csv(x = final_tbl,
-          file = "POF 2007.csv")
+          file = "POF 2007_v2.csv")

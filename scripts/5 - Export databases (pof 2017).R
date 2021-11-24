@@ -10,6 +10,7 @@
 rm(list = ls())
 
 library(readr)
+library(readxl)
 library(dplyr)
 library(ggplot2)
 
@@ -105,7 +106,28 @@ final_tbl <- tbl_morador %>%
          cod_sexo = V0404,
          anos_de_estudo = ANOS_ESTUDO,
          renda_total = RENDA_TOTAL) %>% 
-  right_join(caderneta)
+  right_join(caderneta) %>%
+  left_join(Produtos_Estudo_Sugar_Tax,
+            by = c("cod_item" = "CODIGO_DO_PRODUTO")) %>% 
+  select(COD_UPA, NUM_DOM, NUM_UC,  
+         idade_anos,
+         cod_sexo,
+         anos_de_estudo,
+         renda_total,
+         cod_item, 
+         valor,
+         qtd,
+         isRefri,
+         is_UC_ComRefri,
+         Grupo_FIPE,
+         Grupo_POF1 = Coluna1,
+         Grupo_POF2 = Grupo_POF)
+
+final_tbl$preco <- final_tbl$valor/final_tbl$qtd
+
+final_tbl$Grupo_FIPE[is.na(final_tbl$Grupo_FIPE)] <- "Outros"
+final_tbl$Grupo_POF1[is.na(final_tbl$Grupo_POF1)] <- "Outros"
+final_tbl$Grupo_POF2[is.na(final_tbl$Grupo_POF2)] <- "Outros"
 
 write.csv(x = final_tbl,
-          file = "POF 2017.csv")
+          file = "POF 2017_v2.csv")
