@@ -3,7 +3,7 @@ library(haven)
 library(dplyr)
 library(readxl)
 
-caderneta <- read_dta("C:/Users/bteba/OneDrive - FGV/POF/2007_2008/POF_KELLY/Kelly Gonçalves - pof2008_tr11.dta")
+caderneta <- read_dta("D:/OneDrive - FGV/POF/2007_2008/POF_KELLY/Kelly Gonçalves - pof2008_tr11.dta")
 head(caderneta)
 
 
@@ -77,7 +77,7 @@ for(i in 1:nrow(tbl_caderneta_coletiva_de_refrigerantes)){
 #' distribuição do consumo dos outros alimentos (segundo o grupo);
 #' distribuição do consumo de serviços de atividade física.
 
-tbl_morador <- read_dta("C:/Users/bteba/OneDrive - FGV/POF/2007_2008/POF_KELLY/Kelly Gonçalves - pof2008_tr2.dta")
+tbl_morador <- read_dta("D:/OneDrive - FGV/POF/2007_2008/POF_KELLY/Kelly Gonçalves - pof2008_tr2.dta")
 head(tbl_morador)
 
 colnames(tbl_morador)
@@ -119,3 +119,5 @@ final_tbl$Grupo_POF2[is.na(final_tbl$Grupo_POF2)] <- "Outros"
 
 write.csv(x = final_tbl,
           file = "POF 2007_v2.csv")
+
+writexl::write_xlsx(x = final_tbl, path = "POF 2007_v2.xlsx")

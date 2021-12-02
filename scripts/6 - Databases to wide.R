@@ -7,8 +7,8 @@ library(tidyr)
 library(writexl)
 
 
-POF_2007_v2 <- read_excel("C:/Users/bteba/Downloads/POF/POF 2007_v2.xlsx")
-POF_2017_v2 <- read_excel("C:/Users/bteba/Downloads/POF/POF 2017_v2.xlsx")
+POF_2007_v2 <- read_excel("POF 2007_v2.xlsx")
+POF_2017_v2 <- read_excel("POF 2017_v2.xlsx")
 
 
 
@@ -23,7 +23,7 @@ tbl <- POF_2017_v2 %>%
             qtd = sum(qtd, na.rm=TRUE),
             preco = mean(preco, na.rm=TRUE),
             .groups = "drop") %>%
-  pivot_wider(id_cols = c("COD_UPA" , "NUM_DOM", "NUM_UC"),
+  pivot_wider(id_cols = c("COD_UPA" , "NUM_DOM", "NUM_UC", "idade_anos", "cod_sexo", "anos_de_estudo", "renda_total"),
               names_from = Grupo_FIPE,
               values_from = c("valor", "qtd", "preco"))
 
@@ -34,7 +34,7 @@ for (col in colnames(tbl)) {
 }
 
 writexl::write_xlsx(x = tbl,
-                    path = sprintf("%s_FIPE2.xlsx", "POF_2007_v2") )
+                    path = sprintf("%s_FIPE2.xlsx", "POF_2007_v3") )
 
 POF_2007_v2$preco <-POF_2007_v2$valor_corrigido/POF_2007_v2$qtd 
 
@@ -50,7 +50,7 @@ tbl <- POF_2007_v2 %>%
             preco = mean(preco, na.rm=TRUE),
             # preco = mean(preco_corrigido, na.rm=TRUE),
             .groups = "drop") %>%
-  pivot_wider(id_cols = c("COD_UPA" , "NUM_DOM", "NUM_UC"),
+  pivot_wider(id_cols = c("COD_UPA" , "NUM_DOM", "NUM_UC", "idade_anos", "cod_sexo", "anos_de_estudo", "renda_total"),
               names_from = Grupo_FIPE,
               values_from = c("valor", "qtd", "preco"))
 
@@ -61,4 +61,4 @@ for (col in colnames(tbl)) {
 }
 
 writexl::write_xlsx(x = tbl,
-                    path = sprintf("%s_FIPE2.xlsx", "POF_2017_v2") )
+                    path = sprintf("%s_FIPE2.xlsx", "POF_2017_v3") )

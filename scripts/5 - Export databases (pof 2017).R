@@ -131,3 +131,5 @@ final_tbl$Grupo_POF2[is.na(final_tbl$Grupo_POF2)] <- "Outros"
 
 write.csv(x = final_tbl,
           file = "POF 2017_v2.csv")
+
+writexl::write_xlsx(x = final_tbl, path = "POF 2017_v2.xlsx")
