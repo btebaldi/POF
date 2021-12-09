@@ -56,7 +56,21 @@ tbl_Bebidas_UC_Produto <- tbl_Bebidas_UC_Produto %>%
 
 tbl_Bebidas_UC_Produto[c(1,5,2,3,4,6,7,8,9,10), ]
 
-readr::write_excel_csv(tbl_Bebidas_UC_Produto, "./database/Export/Tabela3.csv")
+readr::write_excel_csv(tbl_Bebidas_UC_Produto[c(1,5,2,3,4,6,7,8,9,10), ], "./database/Export/Tabela3.csv")
+
+writexl::write_xlsx(x = tbl_Bebidas_UC_Produto[c(1,5,2,3,4,6,7,8,9,10), ],
+                    path = "./database/Export/Tabelas Finais/TBL_3/Tabela3.xlsx")
+
+
+fileConn<-file("./database/Export/Tabelas Finais/TBL_3/Readme.txt",
+               encoding = "UTF-8")
+writeLines("\nTabela 3 da FIPE\nNúmero de Domicílios com Consumo Positivo por Categoria – POF 2017/2018", con = fileConn)
+writeLines("banco de dados utilizado: POF (2017) - Tabela CADERNETA COLETIVA", con = fileConn)
+writeLines("\nColuna CATEGORIA: Descricao das categorias (ver lista de categorias)", con = fileConn)
+writeLines("\nColuna Num_Domicilios : Numero de domicilios na categoria", con = fileConn)
+writeLines(sprintf("\nColuna Perc_Total: Percentual do total (calculado como numero de domicilios na categoria sobre o total de domicílios (%d))", Total_domicilios), con = fileConn)
+writeLines(sprintf("\nColuna Perc_TotalBebida: Percentual dos domicilios em relacao aos dom. que consomem produtos selecionados (calculado como numero de domicilios na categoria sobre o total de domicílios que consomem produtos selecionados(%d))", Total_domiciliosProdutoSelecionados), con = fileConn)
+close(fileConn)
 
 
 # Data Analisys - Tabela 4 ------------------------------------------------
@@ -76,7 +90,7 @@ Total_GastosEmBebidas <- sum(tbl_GastosBebidas_UC$VALOR)
 
 tbl_Gasto_Bebidas_UC_Produto <- tbl %>% 
   group_by(CATEGORIA) %>% 
-  summarise(VALOR=sum(VALOR, na.rm = TRUE), .groups = "drop")
+  summarise(VALOR=sum(VALOR_FINAL_defla, na.rm = TRUE), .groups = "drop")
 
 tbl_Gasto_Bebidas_UC_Produto <- tbl_Gasto_Bebidas_UC_Produto %>% 
   add_row(CATEGORIA = " Total", VALOR = Total_GastosEmBebidas)
@@ -87,6 +101,19 @@ tbl_Gasto_Bebidas_UC_Produto <- tbl_Gasto_Bebidas_UC_Produto %>%
 
 # tbl_Gasto_Bebidas_UC_Produto$VALOR <- NULL
 tbl_Gasto_Bebidas_UC_Produto[c(1,5,2,3,4,6,7,8,9,10), ]
+readr::write_excel_csv(tbl_Bebidas_UC_Produto, "./database/Export/Tabelas Finais/TBL_4/Tabela4.csv")
+
+fileConn<-file("./database/Export/Tabelas Finais/TBL_4/Readme.txt",
+               encoding = "UTF-8")
+writeLines("\nTabela 4: Participação Média no Gasto Total e no Gasto com Bebida – POF 2017/2018", con = fileConn)
+writeLines("banco de dados utilizado: POF (2017) - Tabela CADERNETA COLETIVA", con = fileConn)
+writeLines("\nColuna CATEGORIA: Descricao das categorias (ver lista de categorias)", con = fileConn)
+writeLines("\nColuna VALOR: Valor total gasto na categoria em R$", con = fileConn)
+writeLines(sprintf("\nColuna Perc_Total: Percentual do total (calculado como VALOR na categoria sobre o valor total de gastos do domicilios (R$ %0.2f))", Total_GastosDomicilios), con = fileConn)
+writeLines(sprintf("\nColuna Part_TotalGastosComBebida: Percentual dos valor em relacao aos gastos totais com bebdidas (calculado como VALOR na categoria sobre o valor total de gastos do domicilios (%0.2f))", Total_GastosEmBebidas), con = fileConn)
+close(fileConn)
+
+
 
 my_labels <- c(
   "Leite",
@@ -127,8 +154,6 @@ tbl_Gasto_Bebidas_UC_Produto %>%
   labs(title = "Participação Média no Gasto com Bebidas não Alcóolicas – POF 2017/2018",
        x=NULL, y = "%", caption = "Elaboração própria")
 
-
-readr::write_excel_csv(tbl_Bebidas_UC_Produto, "./database/Export/Tabela4.csv")
 
 
 # Data Analisys - Tabela 4 (ajustado por peso) ----------------------------
