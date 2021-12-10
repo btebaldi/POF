@@ -4,7 +4,6 @@ library(tidyr)
 library(dplyr)
 library(readxl)
 
-tbl <- readRDS("./database/Dados_Estudo.rds")
 tbl_caderneta <- readRDS(file = "./database/CADERNETA_COLETIVA_2007.rds")
 
 tbl_caderneta <- tbl_caderneta %>% mutate(V9001 = prod_num_quadro_grupo_pro*100000 + cod_item,
@@ -105,9 +104,8 @@ tbl_Bebidas_UC_Produto <- tbl_Bebidas_UC_Produto %>%
          Perc_TotalBebida =  100*Num_Domicilios/Total_domiciliosProdutoSelecionados)
 
 tbl_Bebidas_UC_Produto <- tbl_Bebidas_UC_Produto[!is.na(tbl_Bebidas_UC_Produto$CATEGORIA),]
-tbl_Bebidas_UC_Produto[c(1,5,2,3,4,6,7,8,9,10), ]
 
-writexl::write_xlsx(x = tbl_Bebidas_UC_Produto[c(1,5,2,3,4,6,7,8,9,10), ],
+writexl::write_xlsx(x = tbl_Bebidas_UC_Produto,
                      path = "./database/Export/Tabelas Finais/POF 2007 TBL_3/Tabela3.xlsx")
 
 
@@ -143,9 +141,9 @@ tbl_GastosBebidas_UC <- tbl_caderneta %>%
 
 Total_GastosEmBebidas <- sum(tbl_GastosBebidas_UC$VALOR)
 
-tbl_Gasto_Bebidas_UC_Produto <- tbl %>% 
+tbl_Gasto_Bebidas_UC_Produto <- tbl_caderneta %>% 
   group_by(CATEGORIA) %>% 
-  summarise(VALOR=sum(VALOR_FINAL_defla, na.rm = TRUE), .groups = "drop")
+  summarise(VALOR=sum(V8000_DEFLA, na.rm = TRUE), .groups = "drop")
 
 tbl_Gasto_Bebidas_UC_Produto <- tbl_Gasto_Bebidas_UC_Produto %>% 
   add_row(CATEGORIA = " Total", VALOR = Total_GastosEmBebidas)
@@ -155,9 +153,9 @@ tbl_Gasto_Bebidas_UC_Produto <- tbl_Gasto_Bebidas_UC_Produto %>%
          Part_TotalGastosComBebida =  100*VALOR/Total_GastosEmBebidas)
 
 # tbl_Gasto_Bebidas_UC_Produto$VALOR <- NULL
-tbl_Gasto_Bebidas_UC_Produto[c(1,5,2,3,4,6,7,8,9,10), ]
+tbl_Gasto_Bebidas_UC_Produto <- na.omit(tbl_Gasto_Bebidas_UC_Produto)
 # readr::write_excel_csv(tbl_Bebidas_UC_Produto, "./database/Export/Tabelas Finais/TBL_4/Tabela4.csv")
-writexl::write_xlsx(x = tbl_Gasto_Bebidas_UC_Produto[c(1,5,2,3,4,6,7,8,9,10), ],
+writexl::write_xlsx(x = tbl_Gasto_Bebidas_UC_Produto,
                     path = "./database/Export/Tabelas Finais/POF 2007 TBL_4/Tabela4.xlsx")
 
 
@@ -176,30 +174,30 @@ close(fileConn)
 
 
 # Data Analisys - Tabela 5 ------------------------------------------------
-tbl_5 <- tbl %>% 
-  select(UF, COD_UPA, NUM_DOM, NUM_UC, VALOR_FINAL, VALOR_FINAL_defla , QTD_FINAL, Prod, CATEGORIA, PESO) %>% 
-  mutate(Regiao = trunc(UF/10)) %>% 
+tbl_5 <- tbl_caderneta %>% 
+  select(cod_uf, COD_UPA, NUM_DOM, NUM_UC, val_despesa, val_despesa_corrigido, QTD_FINAL, CATEGORIA) %>% 
+  mutate(Regiao = trunc(cod_uf/10)) %>% 
   group_by(Regiao, CATEGORIA) %>% 
   summarise(QTD = sum(QTD_FINAL, na.rm = TRUE),
-            VALOR = sum(VALOR_FINAL_defla, na.rm = TRUE), .groups="drop") %>% 
+            VALOR = sum(val_despesa_corrigido, na.rm = TRUE), .groups="drop") %>% 
   mutate(Regiao = factor(Regiao, levels = 1:5, labels = c("N", "NE", "SE", "S", "CO")),
          PRECO = VALOR/QTD) %>% 
   select(Regiao, CATEGORIA, PRECO) %>% 
   pivot_wider(names_from = Regiao, values_from = PRECO)
 
-tbl_5[c(1,5,2,3,4,6,7,8,9), ]
+tbl_5 <- na.omit(tbl_5)
 
-tbl_6 <- tbl %>% 
-  select(UF, COD_UPA, NUM_DOM, NUM_UC, VALOR_FINAL, QTD_FINAL, Prod, CATEGORIA) %>% 
-  mutate(Regiao = trunc(UF/10)) %>% 
+tbl_6 <- tbl_caderneta %>% 
+  select(cod_uf, COD_UPA, NUM_DOM, NUM_UC, val_despesa, QTD_FINAL, CATEGORIA) %>% 
+  mutate(Regiao = trunc(cod_uf/10)) %>% 
   group_by(Regiao, CATEGORIA) %>% 
   summarise(QTD = sum(QTD_FINAL), .groups="drop") %>% 
   mutate(Regiao = factor(Regiao, levels = 1:5, labels = c("N", "NE", "SE", "S", "CO"))) %>% 
   pivot_wider(names_from = Regiao, values_from = QTD)
 
-tbl_6[c(1,5,2,3,4,6,7,8,9), ]
+tbl_6 <- na.omit(tbl_6)
 
-writexl::write_xlsx(x = tbl_6[c(1,5,2,3,4,6,7,8,9), ],
+writexl::write_xlsx(x = tbl_6,
                     path = "./database/Export/Tabelas Finais/POF 2007 TBL_6/Tabela6.xlsx")
 
 fileConn<-file("./database/Export/Tabelas Finais/POF 2007 TBL_6/Readme.txt",
@@ -214,18 +212,18 @@ close(fileConn)
 
 
 
-tbl_7 <- tbl %>% 
-  select(UF, COD_UPA, NUM_DOM, NUM_UC, VALOR_FINAL, QTD_FINAL, Prod, CATEGORIA) %>% 
-  mutate(Regiao = trunc(UF/10)) %>% 
+tbl_7 <- tbl_caderneta %>% 
+  select(cod_uf, COD_UPA, NUM_DOM, NUM_UC, V8000_DEFLA, QTD_FINAL, CATEGORIA) %>% 
+  mutate(Regiao = trunc(cod_uf/10)) %>% 
   group_by(Regiao, CATEGORIA) %>% 
-  summarise(QTD = sum(VALOR_FINAL), .groups="drop") %>% 
+  summarise(QTD = sum(V8000_DEFLA), .groups="drop") %>% 
   mutate(Regiao = factor(Regiao, levels = 1:5, labels = c("N", "NE", "SE", "S", "CO"))) %>% 
   pivot_wider(names_from = Regiao, values_from = QTD)
 
 
 
-tbl_7[c(1,5,2,3,4,6,7,8,9), ]
-writexl::write_xlsx(x = tbl_7[c(1,5,2,3,4,6,7,8,9), ],
+tbl_7 <- na.omit(tbl_7)
+writexl::write_xlsx(x = tbl_7,
                     path = "./database/Export/Tabelas Finais/POF 2007 TBL_7/Tabela7.xlsx")
 
 fileConn<-file("./database/Export/Tabelas Finais/POF 2007 TBL_7/Readme.txt",

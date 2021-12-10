@@ -54,15 +54,15 @@ tbl_Bebidas_UC_Produto <- tbl_Bebidas_UC_Produto %>%
   mutate(Perc_Total =  100*Num_Domicilios/Total_domicilios,
          Perc_TotalBebida =  100*Num_Domicilios/Total_domiciliosProdutoSelecionados)
 
-tbl_Bebidas_UC_Produto[c(1,5,2,3,4,6,7,8,9,10), ]
+tbl_Bebidas_UC_Produto
 
-readr::write_excel_csv(tbl_Bebidas_UC_Produto[c(1,5,2,3,4,6,7,8,9,10), ], "./database/Export/Tabela3.csv")
+# readr::write_excel_csv(tbl_Bebidas_UC_Produto[c(1,5,2,3,4,6,7,8,9,10), ], "./database/Export/Tabela3.csv")
 
-writexl::write_xlsx(x = tbl_Bebidas_UC_Produto[c(1,5,2,3,4,6,7,8,9,10), ],
-                    path = "./database/Export/Tabelas Finais/TBL_3/Tabela3.xlsx")
+writexl::write_xlsx(x = tbl_Bebidas_UC_Produto,
+                    path = "./database/Export/Tabelas Finais/POF 2017 TBL_3/Tabela3.xlsx")
 
 
-fileConn<-file("./database/Export/Tabelas Finais/TBL_3/Readme.txt",
+fileConn<-file("./database/Export/Tabelas Finais/POF 2017 TBL_3/Readme.txt",
                encoding = "UTF-8")
 
 
@@ -93,7 +93,7 @@ Total_GastosEmBebidas <- sum(tbl_GastosBebidas_UC$VALOR)
 
 tbl_Gasto_Bebidas_UC_Produto <- tbl %>% 
   group_by(CATEGORIA) %>% 
-  summarise(VALOR=sum(VALOR_FINAL_defla, na.rm = TRUE), .groups = "drop")
+  summarise(VALOR=sum(VALOR_FINAL, na.rm = TRUE), .groups = "drop")
 
 tbl_Gasto_Bebidas_UC_Produto <- tbl_Gasto_Bebidas_UC_Produto %>% 
   add_row(CATEGORIA = " Total", VALOR = Total_GastosEmBebidas)
@@ -103,13 +103,13 @@ tbl_Gasto_Bebidas_UC_Produto <- tbl_Gasto_Bebidas_UC_Produto %>%
          Part_TotalGastosComBebida =  100*VALOR/Total_GastosEmBebidas)
 
 # tbl_Gasto_Bebidas_UC_Produto$VALOR <- NULL
-tbl_Gasto_Bebidas_UC_Produto[c(1,5,2,3,4,6,7,8,9,10), ]
+tbl_Gasto_Bebidas_UC_Produto
 # readr::write_excel_csv(tbl_Bebidas_UC_Produto, "./database/Export/Tabelas Finais/TBL_4/Tabela4.csv")
-writexl::write_xlsx(x = tbl_Gasto_Bebidas_UC_Produto[c(1,5,2,3,4,6,7,8,9,10), ],
-                    path = "./database/Export/Tabelas Finais/TBL_4/Tabela4.xlsx")
+writexl::write_xlsx(x = tbl_Gasto_Bebidas_UC_Produto,
+                    path = "./database/Export/Tabelas Finais/POF 2017 TBL_4/Tabela4.xlsx")
 
 
-fileConn<-file("./database/Export/Tabelas Finais/TBL_4/Readme.txt",
+fileConn<-file("./database/Export/Tabelas Finais/POF 2017 TBL_4/Readme.txt",
                encoding = "UTF-8")
 txt <- c("\nTabela 4: Participação Média no Gasto Total e no Gasto com Bebida – POF 2017/2018",
   "banco de dados utilizado: POF (2017) - Tabela CADERNETA COLETIVA",
@@ -133,7 +133,7 @@ tbl_5 <- tbl %>%
   select(Regiao, CATEGORIA, PRECO) %>% 
   pivot_wider(names_from = Regiao, values_from = PRECO)
 
-tbl_5[c(1,5,2,3,4,6,7,8,9), ]
+tbl_5
 
 tbl_6 <- tbl %>% 
   select(UF, COD_UPA, NUM_DOM, NUM_UC, VALOR_FINAL, QTD_FINAL, Prod, CATEGORIA) %>% 
@@ -143,12 +143,12 @@ tbl_6 <- tbl %>%
   mutate(Regiao = factor(Regiao, levels = 1:5, labels = c("N", "NE", "SE", "S", "CO"))) %>% 
   pivot_wider(names_from = Regiao, values_from = QTD)
 
-tbl_6[c(1,5,2,3,4,6,7,8,9), ]
+tbl_6
 
-writexl::write_xlsx(x = tbl_6[c(1,5,2,3,4,6,7,8,9), ],
-                    path = "./database/Export/Tabelas Finais/TBL_6/Tabela6.xlsx")
+writexl::write_xlsx(x = tbl_6,
+                    path = "./database/Export/Tabelas Finais/POF 2017 TBL_6/Tabela6.xlsx")
 
-fileConn<-file("./database/Export/Tabelas Finais/TBL_6/Readme.txt",
+fileConn<-file("./database/Export/Tabelas Finais/POF 2017 TBL_6/Readme.txt",
                encoding = "UTF-8")
 txt <- c("\nTabela 6: Quantidade Consumida (em mil litros ou quilogramas) por Categoria de Bebida, POF 2017/2018",
          "banco de dados utilizado: POF (2017) - Tabela CADERNETA COLETIVA",
@@ -170,11 +170,11 @@ tbl_7 <- tbl %>%
 
 
 
-tbl_7[c(1,5,2,3,4,6,7,8,9), ]
-writexl::write_xlsx(x = tbl_7[c(1,5,2,3,4,6,7,8,9), ],
-                    path = "./database/Export/Tabelas Finais/TBL_7/Tabela7.xlsx")
+tbl_7
+writexl::write_xlsx(x = tbl_7,
+                    path = "./database/Export/Tabelas Finais/POF 2017 TBL_7/Tabela7.xlsx")
 
-fileConn<-file("./database/Export/Tabelas Finais/TBL_7/Readme.txt",
+fileConn<-file("./database/Export/Tabelas Finais/POF 2017 TBL_7/Readme.txt",
                encoding = "UTF-8")
 txt <- c("\nTabela 7: PDispêndio Semanal em mil R$ por Categoria de Bebida não Alcoólica – POF 2017/2018",
          "banco de dados utilizado: POF (2017) - Tabela CADERNETA COLETIVA",
