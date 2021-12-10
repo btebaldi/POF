@@ -148,7 +148,6 @@ tbl_6[c(1,5,2,3,4,6,7,8,9), ]
 writexl::write_xlsx(x = tbl_6[c(1,5,2,3,4,6,7,8,9), ],
                     path = "./database/Export/Tabelas Finais/TBL_6/Tabela6.xlsx")
 
-readr::write_excel_csv(tbl_Bebidas_UC_Produto, "./database/Export/Tabelas Finais/TBL_6/Tabela6.csv")
 fileConn<-file("./database/Export/Tabelas Finais/TBL_6/Readme.txt",
                encoding = "UTF-8")
 txt <- c("\nTabela 6: Quantidade Consumida (em mil litros ou quilogramas) por Categoria de Bebida, POF 2017/2018",
