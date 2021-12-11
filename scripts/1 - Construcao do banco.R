@@ -21,12 +21,24 @@ tbl_caderneta <-  as_tibble(tbl_caderneta)
 summary(tbl_caderneta)
 
 
-Produtos_sugar_tax <- read_excel("./database/Produtos sugar tax.xlsx",
-                                 range = cell_limits(ul = c(1,1), lr = c(NA,4)))
-colnames(Produtos_sugar_tax) <-  c("ID", "CATEGORIA", "ID_ITEM", "NOME_PRODUTO")
+Produtos_sugar_tax <- read_excel("./database/Produtos Estudo Sugar Tax.xlsx",
+                                 range = cell_limits(ul = c(1,1), lr = c(NA,9)),
+                                 col_types = c("text",
+                                               "numeric",
+                                               "text",
+                                               "numeric",
+                                               "text",
+                                               "text",
+                                               "text",
+                                               "numeric",
+                                               "text"),
+                                 sheet = "CADASTRO_DE_PRODUTOS")
 
-Produtos_alimentar <- read_excel("./database/Cadastro de Produtos do Consumo Alimentar.xls")
-colnames(Produtos_alimentar) <-  c("ID", "DESCRICAO")
+# colnames(Produtos_sugar_tax) <-  c("ID", "CATEGORIA", "ID_ITEM", "NOME_PRODUTO")
+Produtos_sugar_tax %>% filter(NUM_Grupo_Associado)
+
+# Produtos_alimentar <- read_excel("./database/Cadastro de Produtos do Consumo Alimentar.xls")
+# colnames(Produtos_alimentar) <-  c("ID", "DESCRICAO")
 
 
 
@@ -48,6 +60,11 @@ tbl_caderneta$V8000[tbl_caderneta$V8000 == 9999999.99] <- NA
 
 # Data Selection ----------------------------------------------------------
 
+bebidas <- Produtos_sugar_tax %>%
+  filter(!is.na(Grupo_FIPE)) %>%
+  pull(CODIGO_DO_PRODUTO)
+
+
 tbl_Morador_info <- tbl_Morador_info %>% 
   select(COD_UPA, NUM_DOM, 
          NUM_UC, COD_INFORMANTE,
@@ -60,10 +77,10 @@ tbl_Morador_info <- tbl_Morador_info %>%
          RENDA_TOTAL, UF, PESO_FINAL, PESO)
 
 tbl_despBebidas <- tbl_caderneta %>%
-  filter(V9001 %in% Produtos_sugar_tax$ID_ITEM)
+  filter(V9001 %in% bebidas)
 
-tbl_despTotalAlimentos <- tbl_caderneta %>%
-  filter(V9001 %in% Produtos_alimentar$ID)
+# tbl_despTotalAlimentos <- tbl_caderneta %>%
+#   filter(V9001 %in% Produtos_alimentar$ID)
 
 
 # Label de variaveis (tabela Morador) -------------------------------------
@@ -111,16 +128,16 @@ tbl_despBebidas2 <- tbl_despBebidas %>%
             VALOR_FINAL_defla = sum(Valor_defla, na.rm = TRUE),
             QTD_FINAL = sum(QTD_FINAL, na.rm = TRUE),
             .groups = "drop") %>%
-  inner_join(Produtos_sugar_tax, by=c("Prod" = "ID_ITEM"))
+  inner_join(Produtos_sugar_tax, by=c("Prod" = "CODIGO_DO_PRODUTO"))
 
 summary(tbl_despBebidas2)
 
-tbl_despTotalAlimentos2 <- tbl_despTotalAlimentos %>%
-  select(UF, COD_UPA, NUM_DOM, NUM_UC, Prod = V9001, Valor = V8000, QTD_FINAL) %>%
-  group_by(UF, COD_UPA, NUM_DOM) %>%
-  summarise(Valor_TotalEmAlimentos = sum(Valor, na.rm = TRUE),
-            Qtd_TotalEmAlimentos = sum(QTD_FINAL, na.rm = TRUE),
-            .groups = "drop")
+# tbl_despTotalAlimentos2 <- tbl_despTotalAlimentos %>%
+#   select(UF, COD_UPA, NUM_DOM, NUM_UC, Prod = V9001, Valor = V8000, QTD_FINAL) %>%
+#   group_by(UF, COD_UPA, NUM_DOM) %>%
+#   summarise(Valor_TotalEmAlimentos = sum(Valor, na.rm = TRUE),
+#             Qtd_TotalEmAlimentos = sum(QTD_FINAL, na.rm = TRUE),
+#             .groups = "drop")
 
 
 # Junção do banco de dados ------------------------------------------------

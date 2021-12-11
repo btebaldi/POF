@@ -15,10 +15,30 @@ library(ggplot2)
 
 # Data load ---------------------------------------------------------------
 
-tbl <- read_rds("./database/Dados_Estudo.rds")
 tbl_morador <- read_rds("./database/MORADOR.rds")
 tbl_caderneta <- read_rds("./database/CADERNETA_COLETIVA.rds")
 
+
+Produtos_sugar_tax <- read_excel("./database/Produtos Estudo Sugar Tax.xlsx",
+                                 range = cell_limits(ul = c(1,1), lr = c(NA,9)),
+                                 col_types = c("text",
+                                               "numeric",
+                                               "text",
+                                               "numeric",
+                                               "text",
+                                               "text",
+                                               "text",
+                                               "numeric",
+                                               "text"),
+                                 sheet = "CADASTRO_DE_PRODUTOS")
+
+head(Produtos_sugar_tax)
+
+tbl <- tbl_caderneta %>% 
+    left_join(Produtos_sugar_tax, by = c("V9001"="CODIGO_DO_PRODUTO")) %>% 
+  filter(!is.na(Grupo_FIPE)) %>% 
+  select(UF, COD_UPA, NUM_DOM, NUM_UC, V9001, V8000, V8000_DEFLA, RENDA_TOTAL,
+         CATEGORIA = Grupo_FIPE, QTD_FINAL)
 
 # Data regulariztion ------------------------------------------------------
 
@@ -33,7 +53,6 @@ tbl_caderneta$V8000[tbl_caderneta$V8000 == 9999999.99] <- NA
 Total_domicilios <- tbl_caderneta %>%
   group_by(COD_UPA, NUM_DOM) %>% 
   summarise(qtd=n(), .groups = "drop") %>% nrow()
-
 
 tbl_Bebidas_UC <- tbl %>% 
   group_by(COD_UPA, NUM_DOM) %>% 
@@ -87,13 +106,13 @@ Total_GastosDomicilios <- sum(tbl_GastoTotal_UCs$TotalGastos)
 
 tbl_GastosBebidas_UC <- tbl %>% 
   group_by(COD_UPA, NUM_DOM) %>% 
-  summarise(VALOR=sum(VALOR_FINAL, na.rm = TRUE), .groups = "drop")
+  summarise(VALOR=sum(V8000, na.rm = TRUE), .groups = "drop")
 
 Total_GastosEmBebidas <- sum(tbl_GastosBebidas_UC$VALOR)
 
 tbl_Gasto_Bebidas_UC_Produto <- tbl %>% 
   group_by(CATEGORIA) %>% 
-  summarise(VALOR=sum(VALOR_FINAL, na.rm = TRUE), .groups = "drop")
+  summarise(VALOR=sum(V8000, na.rm = TRUE), .groups = "drop")
 
 tbl_Gasto_Bebidas_UC_Produto <- tbl_Gasto_Bebidas_UC_Produto %>% 
   add_row(CATEGORIA = " Total", VALOR = Total_GastosEmBebidas)
@@ -104,6 +123,7 @@ tbl_Gasto_Bebidas_UC_Produto <- tbl_Gasto_Bebidas_UC_Produto %>%
 
 # tbl_Gasto_Bebidas_UC_Produto$VALOR <- NULL
 tbl_Gasto_Bebidas_UC_Produto
+
 # readr::write_excel_csv(tbl_Bebidas_UC_Produto, "./database/Export/Tabelas Finais/TBL_4/Tabela4.csv")
 writexl::write_xlsx(x = tbl_Gasto_Bebidas_UC_Produto,
                     path = "./database/Export/Tabelas Finais/POF 2017 TBL_4/Tabela4.xlsx")
@@ -123,7 +143,7 @@ close(fileConn)
 
 summary(tbl)
 tbl_5 <- tbl %>% 
-  select(UF, COD_UPA, NUM_DOM, NUM_UC, VALOR_FINAL, VALOR_FINAL_defla , QTD_FINAL, Prod, CATEGORIA, PESO) %>% 
+  select(UF, COD_UPA, NUM_DOM, NUM_UC, VALOR_FINAL=V8000, VALOR_FINAL_defla=V8000_DEFLA, QTD_FINAL, CATEGORIA) %>% 
   mutate(Regiao = trunc(UF/10)) %>% 
   group_by(Regiao, CATEGORIA) %>% 
   summarise(QTD = sum(QTD_FINAL, na.rm = TRUE),
@@ -136,7 +156,7 @@ tbl_5 <- tbl %>%
 tbl_5
 
 tbl_6 <- tbl %>% 
-  select(UF, COD_UPA, NUM_DOM, NUM_UC, VALOR_FINAL, QTD_FINAL, Prod, CATEGORIA) %>% 
+  select(UF, COD_UPA, NUM_DOM, NUM_UC, VALOR_FINAL=V8000, QTD_FINAL, CATEGORIA) %>% 
   mutate(Regiao = trunc(UF/10)) %>% 
   group_by(Regiao, CATEGORIA) %>% 
   summarise(QTD = sum(QTD_FINAL), .groups="drop") %>% 
@@ -161,7 +181,7 @@ close(fileConn)
 
 
 tbl_7 <- tbl %>% 
-  select(UF, COD_UPA, NUM_DOM, NUM_UC, VALOR_FINAL, QTD_FINAL, Prod, CATEGORIA) %>% 
+  select(UF, COD_UPA, NUM_DOM, NUM_UC, VALOR_FINAL=V8000, QTD_FINAL, CATEGORIA) %>% 
   mutate(Regiao = trunc(UF/10)) %>% 
   group_by(Regiao, CATEGORIA) %>% 
   summarise(QTD = sum(VALOR_FINAL), .groups="drop") %>% 

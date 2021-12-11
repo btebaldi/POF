@@ -9,4 +9,4 @@ Coluna Num_Domicilios : Numero de domicilios na categoria
 
 Coluna Perc_Total: Percentual do total (calculado como numero de domicilios na categoria sobre o total de domicílios (50320))
 
-Coluna Perc_TotalBebida: Percentual dos domicilios em relacao aos dom. que consomem produtos selecionados (calculado como numero de domicilios na categoria sobre o total de domicílios que consomem produtos selecionados(34199))
+Coluna Perc_TotalBebida: Percentual dos domicilios em relacao aos dom. que consomem produtos selecionados (calculado como numero de domicilios na categoria sobre o total de domicílios que consomem produtos selecionados(34193))

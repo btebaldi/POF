@@ -8,4 +8,4 @@ Coluna VALOR: Valor total gasto na categoria em R$
 
 Coluna Perc_Total: Percentual do total (calculado como VALOR na categoria sobre o valor total de gastos do domicilios (R$ 6010604.69))
 
-Coluna Part_TotalGastosComBebida: Percentual dos valor em relacao aos gastos totais com bebdidas (calculado como VALOR na categoria sobre o valor total de gastos do domicilios (763344.54))
+Coluna Part_TotalGastosComBebida: Percentual dos valor em relacao aos gastos totais com bebdidas (calculado como VALOR na categoria sobre o valor total de gastos do domicilios (6570760068.52))
