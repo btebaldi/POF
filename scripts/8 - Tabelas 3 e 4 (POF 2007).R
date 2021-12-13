@@ -128,7 +128,7 @@ close(fileConn)
 tbl_GastoTotal_UCs <- tbl_caderneta %>% 
   group_by(COD_UPA,
            NUM_DOM) %>% 
-  summarise(TotalGastos=sum(V8000, na.rm = TRUE), .groups = "drop")
+  summarise(TotalGastos=sum(V8000_DEFLA, na.rm = TRUE), .groups = "drop")
 
 Total_GastosDomicilios <- sum(tbl_GastoTotal_UCs$TotalGastos)
 
@@ -136,7 +136,7 @@ Total_GastosDomicilios <- sum(tbl_GastoTotal_UCs$TotalGastos)
 tbl_GastosBebidas_UC <- tbl_caderneta %>% 
   filter(!is.na(CATEGORIA)) %>% 
   group_by(COD_UPA, NUM_DOM) %>% 
-  summarise(VALOR=sum(V8000, na.rm = TRUE), .groups = "drop")
+  summarise(VALOR=sum(V8000_DEFLA, na.rm = TRUE), .groups = "drop")
 
 
 Total_GastosEmBebidas <- sum(tbl_GastosBebidas_UC$VALOR)

@@ -10,6 +10,8 @@
 rm(list = ls())
 
 library(readr)
+library(tidyr)
+library(readxl)
 library(dplyr)
 library(ggplot2)
 
@@ -97,22 +99,24 @@ close(fileConn)
 
 # Data Analisys - Tabela 4 ------------------------------------------------
 
+tbl_caderneta[is.na(tbl_caderneta$V8000), c("V8000", "V8000_DEFLA")]
+
 tbl_GastoTotal_UCs <- tbl_caderneta %>% 
   group_by(COD_UPA,
            NUM_DOM) %>% 
-  summarise(TotalGastos=sum(V8000, na.rm = TRUE), .groups = "drop")
+  summarise(TotalGastos=sum(V8000_DEFLA, na.rm = TRUE), .groups = "drop")
 
 Total_GastosDomicilios <- sum(tbl_GastoTotal_UCs$TotalGastos)
 
 tbl_GastosBebidas_UC <- tbl %>% 
   group_by(COD_UPA, NUM_DOM) %>% 
-  summarise(VALOR=sum(V8000, na.rm = TRUE), .groups = "drop")
+  summarise(VALOR=sum(V8000_DEFLA, na.rm = TRUE), .groups = "drop")
 
 Total_GastosEmBebidas <- sum(tbl_GastosBebidas_UC$VALOR)
 
 tbl_Gasto_Bebidas_UC_Produto <- tbl %>% 
   group_by(CATEGORIA) %>% 
-  summarise(VALOR=sum(V8000, na.rm = TRUE), .groups = "drop")
+  summarise(VALOR=sum(V8000_DEFLA, na.rm = TRUE), .groups = "drop")
 
 tbl_Gasto_Bebidas_UC_Produto <- tbl_Gasto_Bebidas_UC_Produto %>% 
   add_row(CATEGORIA = " Total", VALOR = Total_GastosEmBebidas)
@@ -156,7 +160,7 @@ tbl_5 <- tbl %>%
 tbl_5
 
 tbl_6 <- tbl %>% 
-  select(UF, COD_UPA, NUM_DOM, NUM_UC, VALOR_FINAL=V8000, QTD_FINAL, CATEGORIA) %>% 
+  select(UF, COD_UPA, NUM_DOM, NUM_UC, VALOR_FINAL=V8000_DEFLA, QTD_FINAL, CATEGORIA) %>% 
   mutate(Regiao = trunc(UF/10)) %>% 
   group_by(Regiao, CATEGORIA) %>% 
   summarise(QTD = sum(QTD_FINAL), .groups="drop") %>% 
@@ -181,7 +185,7 @@ close(fileConn)
 
 
 tbl_7 <- tbl %>% 
-  select(UF, COD_UPA, NUM_DOM, NUM_UC, VALOR_FINAL=V8000, QTD_FINAL, CATEGORIA) %>% 
+  select(UF, COD_UPA, NUM_DOM, NUM_UC, VALOR_FINAL=V8000_DEFLA, QTD_FINAL, CATEGORIA) %>% 
   mutate(Regiao = trunc(UF/10)) %>% 
   group_by(Regiao, CATEGORIA) %>% 
   summarise(QTD = sum(VALOR_FINAL), .groups="drop") %>% 
