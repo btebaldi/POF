@@ -186,12 +186,42 @@ close(fileConn)
 
 tbl_7 <- tbl %>% 
   select(UF, COD_UPA, NUM_DOM, NUM_UC, VALOR_FINAL=V8000_DEFLA, QTD_FINAL, CATEGORIA) %>% 
-  mutate(Regiao = trunc(UF/10)) %>% 
+  # mutate(Regiao = trunc(UF/10)) %>% 
+  mutate(Regiao = UF) %>% 
   group_by(Regiao, CATEGORIA) %>% 
   summarise(QTD = sum(VALOR_FINAL), .groups="drop") %>% 
-  mutate(Regiao = factor(Regiao, levels = 1:5, labels = c("N", "NE", "SE", "S", "CO"))) %>% 
-  pivot_wider(names_from = Regiao, values_from = QTD)
-
+  mutate(Regiao = factor(Regiao, levels = 1:5, labels = c("N", "NE", "SE", "S", "CO"))) %>%
+  # mutate(Regiao = factor(Regiao,
+  #                        levels = c(11,12,13,14,15,16,17,21,22,23,24,25,26,27,28,29,31,32,33,35,41,42,43,50,51,52,53),
+  #                        labels = c("Rondônia",
+  #                                   "Acre",
+  #                                   "Amazonas",
+  #                                   "Roraima",
+  #                                   "Pará",
+  #                                   "Amapá",
+  #                                   "Tocantins",
+  #                                   "Maranhão",
+  #                                   "Piauí",
+  #                                   "Ceará",
+  #                                   "Rio Grande do Norte",
+  #                                   "Paraíba",
+  #                                   "Pernambuco",
+  #                                   "Alagoas",
+  #                                   "Sergipe",
+  #                                   "Bahia",
+  #                                   "Minas Gerais",
+  #                                   "Espírito Santo",
+  #                                   "Rio de Janeiro",
+  #                                   "São Paulo",
+  #                                   "Paraná",
+  #                                   "Santa Catarina",
+  #                                   "Rio Grande do Sul",
+  #                                   "Mato Grosso do Sul",
+  #                                   "Mato Grosso",
+  #                                   "Goiás",
+  #                                   "Distrito Federal")
+  #                        )) %>% 
+    pivot_wider(names_from = Regiao, values_from = QTD)
 
 
 tbl_7
