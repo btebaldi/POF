@@ -18,7 +18,7 @@ dirparth_mask <- "./database/Export/Tabelas Finais/Distribuicao Marginal/%s"
 # Data Load ---------------------------------------------------------------
 
 tbl_caderneta_coletiva <- readRDS("./database/CADERNETA_COLETIVA.rds")
-tbl_morador <- read_rds("./database/MORADOR.rds")
+tbl_morador <- readRDS("./database/MORADOR.rds")
 tbl_morador <-  as_tibble(tbl_morador)
 
 #' Primeiramente vamos buscar a definição de quias produtos sao considerados refrigerantes
