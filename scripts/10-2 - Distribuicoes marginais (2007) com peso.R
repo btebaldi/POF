@@ -1,0 +1,438 @@
+#' Bruno Tebaldi de Queiroz Barbosa
+#' 
+#' 2021-11-07
+#' 
+#' Analise de distribuição dos domicilios que consomem refrigerante.
+
+
+# Setup -------------------------------------------------------------------
+rm(list = ls())
+
+library(tidyr)
+library(readxl)
+library(dplyr)
+library(ggplot2)
+
+dirparth_mask <- "./database/Export/Tabelas Finais com peso/%s"
+
+# Data Load ---------------------------------------------------------------
+
+tbl_caderneta_coletiva <- readRDS(file = "./database/CADERNETA_COLETIVA_2007.rds")
+tbl_morador <- readRDS("./database/MORADOR_2007.rds")
+tbl_morador <-  as_tibble(tbl_morador)
+
+
+# # Seleciona os produtos que sao considerados refrigerantes
+# refrigerantes <- Produtos_sugar_tax %>%
+#   filter(!is.na(Grupo_FIPE)) %>%
+#   pull(CODIGO_DO_PRODUTO)
+# 
+# 
+# tbl_caderneta <- tbl_caderneta %>% 
+#   left_join(Produtos_sugar_tax, by = c("V9001"="CODIGO_DO_PRODUTO")) %>% 
+#   mutate(CATEGORIA = Grupo_FIPE)
+
+
+
+#' Primeiramente vamos buscar a definição de quias produtos sao considerados refrigerantes
+
+Produtos_sugar_tax <- read_excel("./database/Produtos Estudo Sugar Tax.xlsx",
+                                 range = cell_limits(ul = c(1,1), lr = c(NA,9)),
+                                 col_types = c("text",
+                                               "numeric",
+                                               "text",
+                                               "numeric",
+                                               "text",
+                                               "text",
+                                               "text",
+                                               "numeric",
+                                               "text"),
+                                 sheet = "CADASTRO_DE_PRODUTOS")
+
+head(Produtos_sugar_tax)
+
+
+
+
+
+# Data Preparation --------------------------------------------------------
+colnames(tbl_caderneta_coletiva)
+# Associando NA
+tbl_caderneta_coletiva <- tbl_caderneta_coletiva %>%
+  mutate(V9001 = prod_num_quadro_grupo_pro*100000 + cod_item,
+         V8000_DEFLA = val_despesa_corrigido,
+         V8000 = val_despesa,
+         UF = cod_uf,
+         RENDA_TOTAL = renda_total)
+
+
+tbl_caderneta_coletiva$V8000[tbl_caderneta_coletiva$V8000 == 999999.99] <- NA
+
+summary(tbl_caderneta_coletiva)
+
+tbl_caderneta_coletiva %>%
+  select(cod_uf, 
+         num_seq,
+         num_dv, 
+         cod_domc,
+         num_uc,
+         renda_total,
+         val_despesa_corrigido,
+         renda_total,  
+         quant_kg,
+         V9001,
+         V8000, 
+         V8000_DEFLA) %>% 
+  summary()
+
+
+
+# Seleciona os produtos que sao considerados refrigerantes
+tbl_caderneta_coletiva <- tbl_caderneta_coletiva %>% 
+  left_join(Produtos_sugar_tax, by= c("V9001" = "CODIGO_DO_PRODUTO")) %>% 
+  select(UF, COD_UPA, NUM_DOM, NUM_UC, V9001, V8000, V8000_DEFLA,
+         RENDA_TOTAL, QTD_FINAL, DESCRICAO_DO_PRODUTO, Grupo_FIPE)
+
+tbl_caderneta_coletiva$isRefri <- FALSE
+tbl_caderneta_coletiva$isRefri[tbl_caderneta_coletiva$Grupo_FIPE == "Refrigerante"] <- TRUE
+
+tbl_caderneta_coletiva$isProdSelecionado <- FALSE
+tbl_caderneta_coletiva$isProdSelecionado[!is.na(tbl_caderneta_coletiva$Grupo_FIPE)] <- TRUE
+
+tbl_aux2 <- tbl_caderneta_coletiva %>%
+  filter(isRefri == TRUE) %>%
+  distinct(COD_UPA, NUM_DOM) %>% mutate(isDomComRefri = TRUE)
+
+tbl_caderneta_coletiva <- tbl_caderneta_coletiva %>% left_join(tbl_aux2, by = c("COD_UPA", "NUM_DOM"))
+
+tbl_aux2 <- tbl_caderneta_coletiva %>%
+  filter(isProdSelecionado == TRUE) %>%
+  distinct(COD_UPA, NUM_DOM) %>% mutate(isDomComProdSelecionado = TRUE)
+
+tbl_caderneta_coletiva <- tbl_caderneta_coletiva %>% left_join(tbl_aux2, by = c("COD_UPA", "NUM_DOM"))
+
+rm(list = c("tbl_aux2"))
+
+tbl_caderneta_coletiva <- as_tibble(tbl_caderneta_coletiva)
+
+
+
+# Tabela morador ----------------------------------------------------------
+colnames(tbl_morador)
+tbl_morador <- tbl_morador %>% 
+  mutate(COD_UPA = (cod_uf * 1000 + num_seq)*10 + num_dv,
+         NUM_DOM = cod_domc,
+         NUM_UC = num_uc,
+         COD_INFORMANTE = num_inf, 
+         Idate_anos = idade_anos,
+         Sexo = cod_sexo,
+         Raca = cod_cor_raca, 
+         PlanoSaude = plano_saude,
+         ANOS_ESTUDO = anos_de_estudo,
+         V0306 = cod_rel_pess_refe_uc,
+         COMPOSICAO = cod_cond_presenca, 
+         PESO_FINAL= fator_expansao2)
+
+ 
+tbl_morador$anos_de_estudo[tbl_morador$anos_de_estudo == 88] <- NA
+
+# Vamos focar na pessoa de representação da UC.
+tbl_Morador_info <- tbl_morador %>%
+  filter(V0306 == 1) %>% 
+  select(COD_UPA, NUM_DOM, 
+         NUM_UC, COD_INFORMANTE,
+         Idate_anos,
+         Sexo,
+         Raca, 
+         PlanoSaude,
+         ANOS_ESTUDO,
+         COMPOSICAO,
+         PESO_FINAL)
+
+
+# Label de variaveis (tabela Morador)
+
+# lvl <- c(1, 2, 3, 4, 5, 9)
+# lbl <- c("Branca", "Preta", "Amarela", "Parda",  "Indigena", "SemDeclaracao")
+# tbl_Morador_info$Raca <- factor(tbl_Morador_info$Raca, levels = lvl, labels = lbl)
+# 
+# lvl <- c(1, 2)
+# lbl <- c("Sim", "Nao")
+# tbl_Morador_info$PlanoSaude <- factor(tbl_Morador_info$PlanoSaude, levels = lvl, labels = lbl)
+# 
+# # COMPOSICAO	Composição familiar da respectiva Unidade de Consumo da pessoa.
+# # Variável derivada, construída a partir do quesito idade, necessária para a
+# # produção das tabelas da publicação de perfil das despesas. Considere como
+# # criança - pessoas até 14 anos, adultos - pessoas entre 15 e 64 anos e idosos –
+# # pessoas com mais de 65 anos. Moradores com condição na família “empregado
+# # doméstico” e “parente de empregado doméstico” são excluídos de todas as etapas
+# # de construção da variável.	
+# 
+# # 1 – Um adulto sem criança
+# # 2 – Um adulto com ao menos uma criança
+# # 3 – Mais de um adulto sem criança
+# # 4 – Mais de um adulto com ao menos uma criança
+# # 5 – Um ou mais idosos com ou sem crianças
+# # 6 – Um ou mais idosos, com ao menos um adulto, com ou sem crianças
+# lvl <- c(1, 2, 3, 4, 5, 6)
+# lbl <- c("Single", "Single_wKid", "Various", "Various_wKid", "Old", "Old_wKid")
+# tbl_Morador_info$COMPOSICAO <- factor(tbl_Morador_info$COMPOSICAO, levels = lvl, labels = lbl)
+
+
+tbl_caderneta_coletiva <- tbl_caderneta_coletiva %>%
+  left_join(tbl_Morador_info, by = c("COD_UPA" = "COD_UPA", "NUM_DOM" = "NUM_DOM", "NUM_UC" = "NUM_UC"))
+
+
+rm(list = c("tbl_morador", "tbl_Morador_info", "Produtos_sugar_tax"))
+
+# Distribuições Marginais -------------------------------------------------
+
+# [14:10, 12/9/2021] Priscilla Tavares FGV: 2. elaborar as tabelas de
+# estatísticas descritivas, usando 2008 e 2017. São elas:
+#
+# [14:11, 12/9/2021] Priscilla Tavares FGV: - domicílios que possuem consumo
+# positivo de refrigerantes (número e percentual)
+
+
+Total_de_domicilios <-
+  tbl_caderneta_coletiva %>% 
+  # group_by(COD_UPA, NUM_DOM) %>% 
+  count(COD_UPA, NUM_DOM, PESO_FINAL) %>%
+  pull(PESO_FINAL) %>% 
+  sum()
+
+Total_de_domicilios_com_produtos_selecionados <- tbl_caderneta_coletiva %>% 
+  filter(isProdSelecionado == TRUE) %>% 
+  # group_by(COD_UPA, NUM_DOM) %>% 
+  count(COD_UPA, NUM_DOM, PESO_FINAL) %>%
+  pull(PESO_FINAL) %>% 
+  sum()
+
+Total_de_domicilios_consumindo_refrigerante <- tbl_caderneta_coletiva %>% 
+  filter(isRefri == TRUE) %>% 
+  # group_by(COD_UPA, NUM_DOM) %>% 
+  count(COD_UPA, NUM_DOM, PESO_FINAL) %>%
+  pull(PESO_FINAL) %>% 
+  sum()
+
+tbl2 <- tibble(Desc=as.character(NA),
+               Valor=as.numeric(NA),
+               .rows = 4)
+
+tbl2$Desc[1] <- "Total de Domicilios"
+tbl2$Valor[1] <- Total_de_domicilios
+
+tbl2$Desc[2] <- "Domicilios com consumo de produtos selecionados"
+tbl2$Valor[2] <- Total_de_domicilios_com_produtos_selecionados
+
+tbl2$Desc[3] <- "Domicilios com consumo de refrigerante"
+tbl2$Valor[3] <- Total_de_domicilios_consumindo_refrigerante
+
+tbl2$Desc[4] <- "(POF 2007)"
+
+print(tbl2)
+writexl::write_xlsx(x = tbl2,
+                    path = sprintf(dirparth_mask, "POF 2007 - DistMarg_X1_Domicilios.xlsx"))
+
+rm(list = c("Total_de_domicilios", "Total_de_domicilios_com_produtos_selecionados",
+            "tbl2", "Total_de_domicilios_consumindo_refrigerante"))
+
+
+# [14:13, 12/9/2021] Priscilla Tavares FGV: - para os domicílios com consumo
+# positivo: a média de consumo (em litros), o gasto médio total (em R$), o gasto
+# médio com refrigerantes (em R$). Nesse caso, verificar a qual período
+# refere-se a quantidade consumida (semana de referência?, mês?, ano?)
+
+# summary(tbl_caderneta_coletiva)
+
+# Determinando os domicilios com gasto de refrigerante
+tbl.media_de_consumo <-
+  tbl_caderneta_coletiva %>% 
+  filter(isDomComRefri == TRUE) %>%
+  mutate(GastoComRefri = isRefri * V8000_DEFLA,
+         QtdComRefri = isRefri * if_else(is.na(QTD_FINAL), true = 0, false = QTD_FINAL, missing = 0)) %>% 
+  group_by(COD_UPA, NUM_DOM) %>% 
+  summarise(GastoTotal = sum(V8000_DEFLA) ,
+            GastoComRefri = sum(GastoComRefri),
+            QtdTotal = sum(QTD_FINAL),
+            QtdComRefri = sum(QtdComRefri),
+            Peso = mean(PESO_FINAL),
+            .groups = "drop")
+
+tbl <- apply(tbl.media_de_consumo[,c(-1,-2)], 2, mean)
+
+
+tbl2 <- tibble(Desc=as.character(NA),
+               Valor=as.numeric(NA),
+               .rows = 5)
+
+tbl2$Desc[1] <- "Domicilios com consumo de refrigerante"
+
+tbl2$Desc[2] <- "Gasto médio total [R$]"
+tbl2$Valor[2] <- weighted.mean(x = tbl.media_de_consumo$GastoTotal,
+                               w = tbl.media_de_consumo$Peso)
+
+tbl2$Desc[3] <- "Gasto médio com refrigerantes [R$]"
+tbl2$Valor[3] <- weighted.mean(x = tbl.media_de_consumo$GastoComRefri,
+                               w = tbl.media_de_consumo$Peso)
+
+tbl2$Desc[4] <- "Média de consumo de refrigerante[L]"
+tbl2$Valor[4] <- weighted.mean(x = tbl.media_de_consumo$QtdComRefri,
+                               w = tbl.media_de_consumo$Peso)
+
+tbl2$Desc[5] <- "(dados semanais)"
+
+print(tbl2)
+writexl::write_xlsx(x = tbl2,
+                    path = sprintf(dirparth_mask, "POF 2007 - DistMarg_X2_GastoRefri.xlsx"))
+
+rm(list = c("tbl.media_de_consumo", "tbl", "tbl2"))
+
+
+# [14:15, 12/9/2021] Priscilla Tavares FGV: - para os domicílios com consumo
+# positivo de refrigerantes: distribuição por idade, gênero, anos de
+# escolaridade e renda. Aqui as tabelas precisam estar com categorias mais
+# agrupadas.
+
+
+# distribuição por idade
+tb_idade <- tbl_caderneta_coletiva %>% 
+  filter(isDomComRefri == TRUE) %>%
+  mutate(GastoComRefri = isRefri * V8000_DEFLA,
+         QtdComRefri = isRefri * if_else(is.na(QTD_FINAL), true = 0, false = QTD_FINAL, missing = 0)) %>% 
+  group_by(COD_UPA, NUM_DOM) %>% 
+  summarise(GastoTotal = sum(V8000_DEFLA),
+            GastoComRefri = sum(GastoComRefri),
+            QtdTotal = sum(QTD_FINAL),
+            QtdComRefri = sum(QtdComRefri),
+            Peso = mean(PESO_FINAL),
+            Idade = max(Idate_anos),
+            .groups = "drop")
+
+
+tb_idade$Idade_Classe <- cut(tb_idade$Idade, breaks = c(15,20,30,40,50,60,70,80,90,100))
+
+
+
+weighted.mean(x = tb_idade$GastoComRefri[tb_idade$Idade_Classe == "(70,80]"],
+              w = tb_idade$Peso[tb_idade$Idade_Classe == "(70,80]"])
+
+tb_idade2 <- tb_idade %>%
+  group_by(Idade_Classe) %>% 
+  summarise(GastoTotal_mean = weighted.mean(x = GastoTotal, w = Peso),
+            GastoTotal_sd = weighted.sd(x = GastoTotal, wt = Peso, na.rm = TRUE),
+            GastoComRefri_mean = weighted.mean(x = GastoComRefri, w = Peso),
+            GastoComRefri_sd = weighted.sd(x = GastoComRefri, wt = Peso, na.rm = TRUE),
+            QtdComRefri_mean = weighted.mean(x = QtdComRefri, w = Peso),
+            QtdComRefri_sd = weighted.sd(x = QtdComRefri, wt = Peso, na.rm = TRUE),
+            TotalDomiciliosNaClasse = n(),
+            IdadeMediaDaClasse = weighted.mean(x = Idade, w = Peso) )
+
+print(tb_idade2)
+writexl::write_xlsx(x = tb_idade,
+                    path = sprintf(dirparth_mask, "POF 2007 - DistMarg_X3_Tabela_idade.xlsx"))
+
+rm(list = c("tb_idade"))
+
+# distribuição gênero,
+tb_genero <- tbl_caderneta_coletiva %>% 
+  filter(isDomComRefri == TRUE) %>%
+  mutate(GastoComRefri = isRefri * V8000_DEFLA,
+         QtdComRefri = isRefri * if_else(is.na(QTD_FINAL), true = 0, false = QTD_FINAL, missing = 0)) %>% 
+  group_by(COD_UPA, NUM_DOM) %>% 
+  summarise(GastoTotal = sum(V8000_DEFLA),
+            GastoComRefri = sum(GastoComRefri),
+            QtdTotal = sum(QTD_FINAL),
+            QtdComRefri = sum(QtdComRefri),
+            Genero = min(as.numeric(Sexo)),
+            Peso = mean(PESO_FINAL),
+            .groups = "drop")
+
+
+lvl <- c(1, 2)
+lbl <- c("Homem", "Mulher")
+tb_genero$Genero <- factor(tb_genero$Genero, levels = lvl, labels = lbl)
+
+tb_genero <- tb_genero %>%
+  group_by(Genero) %>% 
+  summarise(
+    GastoTotal_mean = weighted.mean(x = GastoTotal, w = Peso),
+    GastoTotal_sd = weighted.sd(GastoTotal, wt = Peso, na.rm = TRUE),
+    GastoComRefri_mean = weighted.mean(x = GastoComRefri, w = Peso),
+    GastoComRefri_sd = weighted.sd(GastoComRefri, wt = Peso, na.rm = TRUE),
+    QtdComRefri_mean = weighted.mean(x = QtdComRefri, w = Peso),
+    QtdComRefri_sd = weighted.sd(QtdComRefri, wt = Peso, na.rm = TRUE),
+    TotalDomiciliosNaClasse = n()  )
+
+print(tb_genero)
+writexl::write_xlsx(x = tb_genero,
+                    path = sprintf(dirparth_mask, "POF 2007 - DistMarg_X4_Tabela_genero.xlsx"))
+rm(list = c("tb_genero",  "lbl", "lvl"))
+
+# distribuição anos de escolaridade
+tb_estudo <- tbl_caderneta_coletiva %>% 
+  filter(isDomComRefri == TRUE) %>%
+  mutate(GastoComRefri = isRefri * V8000_DEFLA,
+         QtdComRefri = isRefri * if_else(is.na(QTD_FINAL), true = 0, false = QTD_FINAL, missing = 0)) %>% 
+  group_by(COD_UPA, NUM_DOM) %>% 
+  summarise(GastoTotal = sum(V8000_DEFLA),
+            GastoComRefri = sum(GastoComRefri),
+            QtdTotal = sum(QTD_FINAL),
+            QtdComRefri = sum(QtdComRefri),
+            ANOS_ESTUDO = max(ANOS_ESTUDO),
+            Peso = mean(PESO_FINAL),
+            .groups = "drop")
+
+tb_estudo$ANOS_ESTUDO_Classe <- factor(tb_estudo$ANOS_ESTUDO)
+
+tb_estudo <- tb_estudo %>%
+  group_by(ANOS_ESTUDO) %>% 
+  summarise(GastoTotal_mean = weighted.mean(GastoTotal, w = Peso),
+            GastoTotal_sd = weighted.sd(GastoTotal, wt = Peso, na.rm = TRUE),
+            GastoComRefri_mean = weighted.mean(GastoComRefri, w = Peso),
+            GastoComRefri_sd = weighted.sd(GastoComRefri, wt = Peso, na.rm = TRUE),
+            QtdComRefri_mean = weighted.mean(QtdComRefri, w = Peso),
+            QtdComRefri_sd = weighted.sd(QtdComRefri, wt = Peso, na.rm = TRUE),
+            AnosEstudoMedioDaClasse = weighted.mean(ANOS_ESTUDO, w = Peso),
+            TotalDomiciliosNaClasse = n()  )
+
+print(tb_estudo)
+writexl::write_xlsx(x = tb_estudo,
+                    path = sprintf(dirparth_mask, "POF 2007 - DistMarg_X5_Tabela_estudo.xlsx"))
+rm(list = c("tb_estudo"))
+
+
+# [14:17, 12/9/2021] Priscilla Tavares FGV: - para os domicílios com consumo
+# positivo de refrigerantes: qual é o gasto médio total com alimentos e qual é o
+# gasto com alimentos, para cada grupo alimentar que aparece na tabela da POF
+# (aquelas categorias sobre as quais conversamos, Bruno. Se tiver dúvidas, me
+# avise por favor).
+
+tbl_caderneta_coletiva2 <- tbl_caderneta_coletiva
+tbl_caderneta_coletiva2$Grupo_FIPE[is.na(tbl_caderneta_coletiva2$Grupo_FIPE)] <- "OUTROS"
+tbl_grupos <- tbl_caderneta_coletiva2 %>% 
+  filter(isDomComRefri == TRUE) %>%
+  # mutate(GastoComRefri = isRefri * V8000_DEFLA,
+  #        QtdComRefri = isRefri * if_else(is.na(QTD_FINAL), true = 0, false = QTD_FINAL, missing = 0)) %>% 
+  group_by(COD_UPA, NUM_DOM, Grupo_FIPE) %>% 
+  summarise(GastoTotal = sum(V8000_DEFLA),
+            QtdTotal = sum(QTD_FINAL, na.rm = TRUE),
+            Peso = mean(PESO_FINAL),
+            .groups = "drop")
+
+summary(tbl_grupos)
+
+tbl_grupos <- tbl_grupos %>%
+  group_by(Grupo_FIPE) %>% 
+  summarise(GastoTotal_mean = weighted.mean(GastoTotal, w = Peso),
+            GastoTotal_sd = weighted.sd(GastoTotal, wt = Peso, na.rm = TRUE),
+            QtdTotal_mean = weighted.mean(QtdTotal, w = Peso),
+            QtdTotal_sd = weighted.sd(QtdTotal, wt = Peso, na.rm = TRUE),
+            TotalDomiciliosNaClasse = n() )
+
+print(tbl_grupos)
+writexl::write_xlsx(x = tbl_grupos,
+                    path = sprintf(dirparth_mask, "POF 2007 - DistMarg_X6_Tabela_grupos.xlsx"))
+rm(list = c("tbl_grupos"))
+
+
