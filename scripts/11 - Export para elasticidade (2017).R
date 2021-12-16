@@ -8,6 +8,7 @@
 # Setup -------------------------------------------------------------------
 rm(list = ls())
 
+library(stringr)
 library(tidyr)
 library(readxl)
 library(dplyr)
@@ -18,7 +19,7 @@ dirparth_mask <- "./database/Export/Tabelas Finais/Distribuicao Marginal/%s"
 # Data Load ---------------------------------------------------------------
 
 tbl_caderneta_coletiva <- readRDS("./database/CADERNETA_COLETIVA.rds")
-tbl_morador <- read_rds("./database/MORADOR.rds")
+tbl_morador <- readRDS("./database/MORADOR.rds")
 tbl_morador <-  as_tibble(tbl_morador)
 
 #' Primeiramente vamos buscar a definição de quias produtos sao considerados refrigerantes
@@ -52,7 +53,7 @@ tbl_caderneta_coletiva$V8000[tbl_caderneta_coletiva$V8000 == 9999999.99] <- NA
 tbl_caderneta_coletiva <- tbl_caderneta_coletiva %>% 
   left_join(Produtos_sugar_tax, by= c("V9001" = "CODIGO_DO_PRODUTO")) %>% 
   select(UF, COD_UPA, NUM_DOM, NUM_UC, V9001, V8000, V8000_DEFLA,
-         PESO, RENDA_TOTAL, QTD_FINAL, DESCRICAO_DO_PRODUTO, Grupo_FIPE)
+         PESO_FINAL, RENDA_TOTAL, QTD_FINAL, DESCRICAO_DO_PRODUTO, Grupo_FIPE)
 
 tbl_caderneta_coletiva$isRefri <- FALSE
 tbl_caderneta_coletiva$isRefri[tbl_caderneta_coletiva$Grupo_FIPE == "Refrigerante"] <- TRUE
@@ -83,18 +84,25 @@ tbl_caderneta_coletiva <- as_tibble(tbl_caderneta_coletiva)
 
 # Vamos focar na pessoa de representação da UC.
 tbl_Morador_info <- tbl_morador %>%
-  filter(V0306 == 1) %>% 
-  select(COD_UPA, NUM_DOM, 
-         NUM_UC, COD_INFORMANTE,
-         Idate_anos = V0403,
-         Sexo = V0404,
-         Raca = V0405, 
-         PlanoSaude = V0406,
-         ANOS_ESTUDO,
-         COMPOSICAO)
+  filter(V0306 == 1) 
 
+#  Agrupa as informacoes de UC
+tbl_Morador_info <- tbl_Morador_info %>%
+  group_by(COD_UPA, NUM_DOM) %>% 
+  summarise(RENDA_TOTAL = sum(RENDA_TOTAL),
+    Idate_anos = max(V0403),
+    Sexo = min(V0404),
+    Raca = min(V0405),
+    PlanoSaude = min(V0406),
+    ANOS_ESTUDO = max(ANOS_ESTUDO),
+    .groups = "drop")
 
-# Label de variaveis (tabela Morador)
+tbl_Morador_info_qtd <- tbl_morador %>% 
+  group_by(COD_UPA, NUM_DOM) %>% 
+  summarise(qtd_Moradores = n(), .groups = "drop")
+
+tbl_Morador_info <- left_join(tbl_Morador_info, tbl_Morador_info_qtd, 
+                              by = c("COD_UPA", "NUM_DOM"))
 
 # lvl <- c(1, 2, 3, 4, 5, 9)
 # lbl <- c("Branca", "Preta", "Amarela", "Parda",  "Indigena", "SemDeclaracao")
@@ -122,37 +130,49 @@ tbl_Morador_info <- tbl_morador %>%
 # lbl <- c("Single", "Single_wKid", "Various", "Various_wKid", "Old", "Old_wKid")
 # tbl_Morador_info$COMPOSICAO <- factor(tbl_Morador_info$COMPOSICAO, levels = lvl, labels = lbl)
 
+tbl_caderneta_coletiva <- tbl_caderneta_coletiva %>%
+  left_join(tbl_Morador_info, by = c("COD_UPA" = "COD_UPA", "NUM_DOM" = "NUM_DOM"))
 
 tbl_caderneta_coletiva <- tbl_caderneta_coletiva %>%
-  left_join(tbl_Morador_info, by = c("COD_UPA" = "COD_UPA", "NUM_DOM" = "NUM_DOM", "NUM_UC" = "NUM_UC"))
+  mutate(RENDA_TOTAL = RENDA_TOTAL.y)
 
-
-rm(list = c("tbl_morador", "tbl_Morador_info", "Produtos_sugar_tax"))
+rm(list = c("tbl_morador", "tbl_Morador_info", "tbl_Morador_info_qtd", "Produtos_sugar_tax"))
 
 # Distribuições Marginais -------------------------------------------------
 
 # Quando nao tem classificacao FIPE
 tbl_caderneta_coletiva$Grupo_FIPE[is.na(tbl_caderneta_coletiva$Grupo_FIPE)] <- "SemGrupoFipe"
 
+# Agrupamento das UNIDADES DE CONSUMO (UC) nos DOMICILIOS (DOM)
 
 tbl <- tbl_caderneta_coletiva %>% 
   filter(isDomComProdSelecionado == 1) %>% 
   mutate(Preco = V8000_DEFLA/QTD_FINAL) %>% 
   group_by(COD_UPA, NUM_DOM, Grupo_FIPE) %>% 
-  summarise(idade_anos = max(Idate_anos),
+  summarise(Regiao = mean(UF),
+            idade_anos = max(Idate_anos),
             cod_sexo = min(Sexo),
-            anos_de_estudo = max(ANOS_ESTUDO),
             renda_total = mean(RENDA_TOTAL),
+            anos_de_estudo = max(ANOS_ESTUDO),
+            QtdMoradores = mean(qtd_Moradores),
             valor = sum(V8000_DEFLA),
             qtd = sum(QTD_FINAL),
-            Preco = mean(Preco), .groups = "drop") %>% 
-  pivot_wider(id_cols = c("COD_UPA", "NUM_DOM"), 
+            Preco = mean(Preco),
+            Peso = mean(PESO_FINAL),
+            .groups = "drop") %>% 
+  pivot_wider(id_cols = c("COD_UPA", "NUM_DOM", "Regiao", "idade_anos",
+                          "cod_sexo",
+                          "renda_total",
+                          "anos_de_estudo",
+                          "QtdMoradores",
+                          "Peso"), 
               values_from = c("valor", "qtd", "Preco"),
               names_from = c("Grupo_FIPE"))
 
+tbl$Regiao <- factor(trunc(tbl$Regiao/10), levels = 1:5, labels = c("N", "NE", "SE", "S", "CO"))
 
 for (col in colnames(tbl)) {
-  if(col == "COD_UPA" | col == "NUM_DOM"){
+  if(col %in% c("COD_UPA", "NUM_DOM", "Regiao", "idade_anos", "cod_sexo", "renda_total", "anos_de_estudo", "QtdMoradores")){
     next
   }
   
@@ -163,5 +183,3 @@ for (col in colnames(tbl)) {
 }
 
 writexl::write_xlsx(x = tbl, path = sprintf(dirparth_mask, "Elasticidade 2017_v2.xlsx"))
-
-

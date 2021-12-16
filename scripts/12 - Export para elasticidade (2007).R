@@ -10,6 +10,7 @@
 # Setup -------------------------------------------------------------------
 rm(list = ls())
 
+library(stringr)
 library(tidyr)
 library(readxl)
 library(dplyr)
@@ -19,9 +20,8 @@ dirparth_mask <- "./database/Export/Tabelas Finais/Distribuicao Marginal/%s"
 
 # Data Load ---------------------------------------------------------------
 
-
 tbl_caderneta_coletiva <- readRDS(file = "./database/CADERNETA_COLETIVA_2007.rds")
-tbl_morador <- read_rds("./database/MORADOR_2007.rds")
+tbl_morador <- readRDS("./database/MORADOR_2007.rds")
 tbl_morador <-  as_tibble(tbl_morador)
 
 
@@ -136,28 +136,43 @@ tbl_morador <- tbl_morador %>%
          PlanoSaude = plano_saude,
          ANOS_ESTUDO = anos_de_estudo,
          V0306 = cod_rel_pess_refe_uc,
+         PESO_FINAL = fator_expansao2,
          COMPOSICAO = cod_cond_presenca)
-
 
 tbl_morador$anos_de_estudo[tbl_morador$anos_de_estudo == 88] <- NA
 
+
+
 # Vamos focar na pessoa de representação da UC.
-tbl_Morador_info <- tbl_morador %>%
-  filter(V0306 == 1) %>% 
-  select(COD_UPA, NUM_DOM, 
-         NUM_UC, COD_INFORMANTE,
-         Idate_anos,
-         Sexo,
-         Raca, 
-         PlanoSaude,
-         ANOS_ESTUDO,
-         COMPOSICAO)
+tbl_Morador_info <- tbl_morador %>% filter(V0306 == 1)
+
+#  Agrupa as informacoes de UC
+tbl_Morador_info <- tbl_Morador_info %>%
+  group_by(COD_UPA, NUM_DOM) %>% 
+  summarise(RENDA_TOTAL = sum(renda_total),
+            Idate_anos = max(Idate_anos),
+            Sexo = min(Sexo),
+            Raca = min(Raca),
+            PESO_FINAL = mean(fator_expansao2),
+            PlanoSaude = min(PlanoSaude),
+            ANOS_ESTUDO = max(ANOS_ESTUDO),
+            .groups = "drop")
+
+tbl_Morador_info_qtd <- tbl_morador %>% 
+  group_by(COD_UPA, NUM_DOM) %>% 
+  summarise(qtd_Moradores = n(), .groups = "drop")
+
+tbl_Morador_info <- left_join(tbl_Morador_info, tbl_Morador_info_qtd, 
+                              by = c("COD_UPA", "NUM_DOM"))
+
 
 tbl_caderneta_coletiva <- tbl_caderneta_coletiva %>%
-  left_join(tbl_Morador_info, by = c("COD_UPA" = "COD_UPA", "NUM_DOM" = "NUM_DOM", "NUM_UC" = "NUM_UC"))
+  left_join(tbl_Morador_info, by = c("COD_UPA" = "COD_UPA", "NUM_DOM" = "NUM_DOM"))
 
+tbl_caderneta_coletiva <- tbl_caderneta_coletiva %>%
+  mutate(RENDA_TOTAL = RENDA_TOTAL.y)
 
-rm(list = c("tbl_morador", "tbl_Morador_info", "Produtos_sugar_tax"))
+rm(list = c("tbl_morador", "tbl_Morador_info", "tbl_Morador_info_qtd", "Produtos_sugar_tax"))
 
 # Distribuições Marginais -------------------------------------------------
 
@@ -168,25 +183,36 @@ tbl <- tbl_caderneta_coletiva %>%
   filter(isDomComProdSelecionado == 1) %>% 
   mutate(Preco = V8000_DEFLA/QTD_FINAL) %>% 
   group_by(COD_UPA, NUM_DOM, Grupo_FIPE) %>% 
-  summarise(idade_anos = max(Idate_anos),
+  summarise(Regiao = mean(UF),
+            idade_anos = max(Idate_anos),
             cod_sexo = min(Sexo),
-            anos_de_estudo = max(ANOS_ESTUDO),
             renda_total = mean(RENDA_TOTAL),
+            anos_de_estudo = max(ANOS_ESTUDO),
+            QtdMoradores = mean(qtd_Moradores),
             valor = sum(V8000_DEFLA),
             qtd = sum(QTD_FINAL),
-            Preco = mean(Preco), .groups = "drop") %>% 
-  pivot_wider(id_cols = c("COD_UPA", "NUM_DOM"), 
+            Preco = mean(Preco),
+            Peso = mean(PESO_FINAL),
+            .groups = "drop") %>% 
+  pivot_wider(id_cols = c("COD_UPA", "NUM_DOM", "Regiao", "idade_anos",
+                          "cod_sexo",
+                          "renda_total",
+                          "anos_de_estudo",
+                          "QtdMoradores",
+                          "Peso"), 
               values_from = c("valor", "qtd", "Preco"),
               names_from = c("Grupo_FIPE"))
 
 
+tbl$Regiao <- factor(trunc(tbl$Regiao/10), levels = 1:5, labels = c("N", "NE", "SE", "S", "CO"))
+
 for (col in colnames(tbl)) {
-  if(col == "COD_UPA" | col == "NUM_DOM"){
+  if(col %in% c("COD_UPA", "NUM_DOM", "Regiao", "idade_anos", "cod_sexo", "renda_total", "anos_de_estudo", "QtdMoradores")){
     next
   }
   
   if(!str_detect(col, "Preco_.*")) {
-    cat("Setando coluna", col, "\n")
+    cat(col, "\n")
     tbl[[col]][is.na(tbl[[col]])] <- 0
   }
 }
