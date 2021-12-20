@@ -18,6 +18,11 @@ library(ggplot2)
 
 dirparth_mask <- "./database/Export/Tabelas Finais/Distribuicao Marginal/%s"
 
+
+
+
+
+
 # Data Load ---------------------------------------------------------------
 
 tbl_caderneta_coletiva <- readRDS(file = "./database/CADERNETA_COLETIVA_2007.rds")
@@ -97,7 +102,7 @@ tbl_caderneta_coletiva %>%
 tbl_caderneta_coletiva <- tbl_caderneta_coletiva %>% 
   left_join(Produtos_sugar_tax, by= c("V9001" = "CODIGO_DO_PRODUTO")) %>% 
   select(UF, COD_UPA, NUM_DOM, NUM_UC, V9001, V8000, V8000_DEFLA,
-         RENDA_TOTAL, QTD_FINAL, DESCRICAO_DO_PRODUTO, Grupo_FIPE)
+         RENDA_TOTAL, QTD_FINAL, DESCRICAO_DO_PRODUTO, Grupo_FIPE, Urbano)
 
 tbl_caderneta_coletiva$isRefri <- FALSE
 tbl_caderneta_coletiva$isRefri[tbl_caderneta_coletiva$Grupo_FIPE == "Refrigerante"] <- TRUE
@@ -125,6 +130,7 @@ tbl_caderneta_coletiva <- as_tibble(tbl_caderneta_coletiva)
 
 # Tabela morador ----------------------------------------------------------
 colnames(tbl_morador)
+
 tbl_morador <- tbl_morador %>% 
   mutate(COD_UPA = (cod_uf * 1000 + num_seq)*10 + num_dv,
          NUM_DOM = cod_domc,
@@ -141,7 +147,13 @@ tbl_morador <- tbl_morador %>%
 
 tbl_morador$anos_de_estudo[tbl_morador$anos_de_estudo == 88] <- NA
 
+DOMICILIO_2007 <- readRDS("./database/DOMICILIO_2007.rds")
 
+DOMICILIO_2007 <- DOMICILIO_2007 %>%
+  select("cod_uf", "num_seq", "num_dv", "cod_domc", "qtd_morador_domc")
+
+tbl_morador <- tbl_morador %>%
+  left_join(DOMICILIO_2007, by=c("cod_uf", "num_seq", "num_dv", "cod_domc"))
 
 # Vamos focar na pessoa de representação da UC.
 tbl_Morador_info <- tbl_morador %>% filter(V0306 == 1)
@@ -156,14 +168,11 @@ tbl_Morador_info <- tbl_Morador_info %>%
             PESO_FINAL = mean(fator_expansao2),
             PlanoSaude = min(PlanoSaude),
             ANOS_ESTUDO = max(ANOS_ESTUDO),
+            Qtd_Morador = mean(qtd_morador_domc),
             .groups = "drop")
 
-tbl_Morador_info_qtd <- tbl_morador %>% 
-  group_by(COD_UPA, NUM_DOM) %>% 
-  summarise(qtd_Moradores = n(), .groups = "drop")
-
-tbl_Morador_info <- left_join(tbl_Morador_info, tbl_Morador_info_qtd, 
-                              by = c("COD_UPA", "NUM_DOM"))
+# tbl_Morador_info <- left_join(tbl_Morador_info, tbl_Morador_info_qtd, 
+#                               by = c("COD_UPA", "NUM_DOM"))
 
 
 tbl_caderneta_coletiva <- tbl_caderneta_coletiva %>%
@@ -172,7 +181,7 @@ tbl_caderneta_coletiva <- tbl_caderneta_coletiva %>%
 tbl_caderneta_coletiva <- tbl_caderneta_coletiva %>%
   mutate(RENDA_TOTAL = RENDA_TOTAL.y)
 
-rm(list = c("tbl_morador", "tbl_Morador_info", "tbl_Morador_info_qtd", "Produtos_sugar_tax"))
+rm(list = c("tbl_morador", "tbl_Morador_info", "Produtos_sugar_tax"))
 
 # Distribuições Marginais -------------------------------------------------
 
@@ -188,7 +197,8 @@ tbl <- tbl_caderneta_coletiva %>%
             cod_sexo = min(Sexo),
             renda_total = mean(RENDA_TOTAL),
             anos_de_estudo = max(ANOS_ESTUDO),
-            QtdMoradores = mean(qtd_Moradores),
+            QtdMoradores = mean(Qtd_Morador),
+            Urbano = mean(as.numeric(Urbano)),
             valor = sum(V8000_DEFLA),
             qtd = sum(QTD_FINAL),
             Preco = mean(Preco),
@@ -199,15 +209,15 @@ tbl <- tbl_caderneta_coletiva %>%
                           "renda_total",
                           "anos_de_estudo",
                           "QtdMoradores",
+                          "Urbano",
                           "Peso"), 
               values_from = c("valor", "qtd", "Preco"),
               names_from = c("Grupo_FIPE"))
 
-
 tbl$Regiao <- factor(trunc(tbl$Regiao/10), levels = 1:5, labels = c("N", "NE", "SE", "S", "CO"))
 
 for (col in colnames(tbl)) {
-  if(col %in% c("COD_UPA", "NUM_DOM", "Regiao", "idade_anos", "cod_sexo", "renda_total", "anos_de_estudo", "QtdMoradores")){
+  if(col %in% c("COD_UPA", "NUM_DOM", "Regiao", "idade_anos", "cod_sexo", "renda_total", "anos_de_estudo", "QtdMoradores", "Urbano", "Peso")){
     next
   }
   
