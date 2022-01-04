@@ -186,8 +186,8 @@ close(fileConn)
 
 tbl_7 <- tbl %>% 
   select(UF, COD_UPA, NUM_DOM, NUM_UC, VALOR_FINAL=V8000_DEFLA, QTD_FINAL, CATEGORIA) %>% 
-  # mutate(Regiao = trunc(UF/10)) %>% 
-  mutate(Regiao = UF) %>% 
+  mutate(Regiao = trunc(UF/10)) %>% 
+  # mutate(Regiao = UF) %>% 
   group_by(Regiao, CATEGORIA) %>% 
   summarise(QTD = sum(VALOR_FINAL), .groups="drop") %>% 
   mutate(Regiao = factor(Regiao, levels = 1:5, labels = c("N", "NE", "SE", "S", "CO"))) %>%

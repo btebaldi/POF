@@ -310,14 +310,14 @@ tb_idade <- tbl_caderneta_coletiva %>%
             .groups = "drop")
 
 
-tb_idade$Idade_Classe <- cut(tb_idade$Idade, breaks = c(15,20,30,40,50,60,70,80,90,100))
+tb_idade$Idade_Classe <- cut(tb_idade$Idade, breaks = c(13,20,30,40,50,60,70,80,90,110))
 
 
 
 weighted.mean(x = tb_idade$GastoComRefri[tb_idade$Idade_Classe == "(70,80]"],
               w = tb_idade$Peso[tb_idade$Idade_Classe == "(70,80]"])
 
-tb_idade2 <- tb_idade %>%
+tb_idade <- tb_idade %>%
   group_by(Idade_Classe) %>% 
   summarise(GastoTotal_mean = weighted.mean(x = GastoTotal, w = Peso),
             GastoTotal_sd = weighted.sd(x = GastoTotal, wt = Peso, na.rm = TRUE),
@@ -328,7 +328,7 @@ tb_idade2 <- tb_idade %>%
             TotalDomiciliosNaClasse = n(),
             IdadeMediaDaClasse = weighted.mean(x = Idade, w = Peso) )
 
-print(tb_idade2)
+print(tb_idade)
 writexl::write_xlsx(x = tb_idade,
                     path = sprintf(dirparth_mask, "POF 2007 - DistMarg_X3_Tabela_idade.xlsx"))
 
