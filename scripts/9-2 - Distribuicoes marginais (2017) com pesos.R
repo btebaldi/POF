@@ -54,13 +54,18 @@ tbl_caderneta_coletiva$V8000[tbl_caderneta_coletiva$V8000 == 9999999.99] <- NA
 tbl_caderneta_coletiva <- tbl_caderneta_coletiva %>% 
   left_join(Produtos_sugar_tax, by= c("V9001" = "CODIGO_DO_PRODUTO")) %>% 
   select(UF, COD_UPA, NUM_DOM, NUM_UC, V9001, V8000, V8000_DEFLA,
-         PESO_FINAL, RENDA_TOTAL, QTD_FINAL, DESCRICAO_DO_PRODUTO, Grupo_FIPE)
+         PESO_FINAL, RENDA_TOTAL, QTD_FINAL, DESCRICAO_DO_PRODUTO, Grupo_FIPE, myACUCAR)
 
 tbl_caderneta_coletiva$isRefri <- FALSE
 tbl_caderneta_coletiva$isRefri[tbl_caderneta_coletiva$Grupo_FIPE == "Refrigerante"] <- TRUE
 
 tbl_caderneta_coletiva$isProdSelecionado <- FALSE
 tbl_caderneta_coletiva$isProdSelecionado[!is.na(tbl_caderneta_coletiva$Grupo_FIPE)] <- TRUE
+
+
+tbl_caderneta_coletiva$isAcucar <- FALSE
+tbl_caderneta_coletiva$isAcucar[tbl_caderneta_coletiva$myACUCAR == 1] <- TRUE
+
 
 tbl_aux2 <- tbl_caderneta_coletiva %>%
   filter(isRefri == TRUE) %>%
@@ -130,6 +135,8 @@ tbl_caderneta_coletiva <- tbl_caderneta_coletiva %>%
 
 
 rm(list = c("tbl_morador", "tbl_Morador_info", "Produtos_sugar_tax"))
+
+tbl_caderneta_coletiva <- tbl_caderneta_coletiva %>% mutate(Preco = V8000_DEFLA / QTD_FINAL )
 
 # Distribuições Marginais -------------------------------------------------
 
@@ -380,6 +387,41 @@ print(tbl_grupos)
 writexl::write_xlsx(x = tbl_grupos,
                     path = sprintf(dirparth_mask, "POF 2017 - DistMarg_X6_Tabela_grupos.xlsx"))
 rm(list = c("tbl_grupos"))
+
+
+
+
+# -----------------------------------------------------------
+
+
+tbl_caderneta_coletiva2 <- tbl_caderneta_coletiva
+tbl_caderneta_coletiva2$Grupo_FIPE[is.na(tbl_caderneta_coletiva2$Grupo_FIPE)] <- "OUTROS"
+tbl_grupos <- tbl_caderneta_coletiva2 %>% 
+  filter(isDomComRefri == TRUE) %>%
+  group_by(COD_UPA, NUM_DOM, Grupo_FIPE) %>% 
+  summarise(Preco = mean(Preco),
+            Peso = mean(PESO_FINAL),
+            .groups = "drop")
+
+summary(tbl_grupos)
+
+tbl_grupos <- tbl_grupos %>%
+  group_by(Grupo_FIPE) %>% 
+  summarise(Preco_mean = weighted.mean(Preco, w = Peso),
+            Preco_sd = weighted.sd(Preco, wt = Peso, na.rm = TRUE),
+            TotalDomiciliosNaClasse = n() )
+
+print(tbl_grupos)
+writexl::write_xlsx(x = tbl_grupos,
+                    path = sprintf(dirparth_mask, "POF 2017 - DistMarg_X9_Tabela_gruposPrecos.xlsx"))
+rm(list = c("tbl_grupos"))
+
+
+
+
+
+
+
 
 
 

@@ -95,6 +95,8 @@ tbl_Morador_info <- tbl_Morador_info %>%
     Raca = min(V0405),
     PlanoSaude = min(V0406),
     ANOS_ESTUDO = max(ANOS_ESTUDO),
+    TIPO_SITUACAO_REG = min(TIPO_SITUACAO_REG),
+    COMPOSICAO = max(COMPOSICAO),
     .groups = "drop")
 
 tbl_Morador_info_qtd <- tbl_morador %>% 
@@ -159,20 +161,27 @@ tbl <- tbl_caderneta_coletiva %>%
             qtd = sum(QTD_FINAL),
             Preco = mean(Preco),
             Peso = mean(PESO_FINAL),
+            Urbano_Rural = min(TIPO_SITUACAO_REG),
+            COMPOSICAO = max(COMPOSICAO),
             .groups = "drop") %>% 
   pivot_wider(id_cols = c("COD_UPA", "NUM_DOM", "Regiao", "idade_anos",
                           "cod_sexo",
                           "renda_total",
                           "anos_de_estudo",
                           "QtdMoradores",
-                          "Peso"), 
+                          "Peso",
+                          "Urbano_Rural",
+                          "COMPOSICAO"
+                          ), 
               values_from = c("valor", "qtd", "Preco"),
               names_from = c("Grupo_FIPE"))
 
 tbl$Regiao <- factor(trunc(tbl$Regiao/10), levels = 1:5, labels = c("N", "NE", "SE", "S", "CO"))
+tbl$Urbano_Rural <- factor(tbl$Urbano_Rural, levels = 1:2, labels = c("Urbano", "Rural"))
+
 
 for (col in colnames(tbl)) {
-  if(col %in% c("COD_UPA", "NUM_DOM", "Regiao", "idade_anos", "cod_sexo", "renda_total", "anos_de_estudo", "QtdMoradores")){
+  if(col %in% c("COD_UPA", "NUM_DOM", "Regiao", "idade_anos", "cod_sexo", "renda_total", "anos_de_estudo", "QtdMoradores",  "Urbano_Rural", "COMPOSICAO")){
     next
   }
   
