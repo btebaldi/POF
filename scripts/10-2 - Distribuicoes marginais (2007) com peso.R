@@ -137,7 +137,7 @@ tbl_morador <- tbl_morador %>%
          COMPOSICAO = cod_cond_presenca, 
          PESO_FINAL= fator_expansao2)
 
- 
+
 tbl_morador$anos_de_estudo[tbl_morador$anos_de_estudo == 88] <- NA
 
 # Vamos focar na pessoa de representação da UC.
@@ -471,11 +471,15 @@ rm(list = c("tbl_grupos"))
 
 
 
+# Calculo de media de consumo
 
+tbl.aux <- tbl_caderneta_coletiva %>% 
+  group_by(COD_UPA, NUM_DOM, Grupo_FIPE) %>% 
+  summarise(Qtd_produto = sum(QTD_FINAL), .groups = "drop") %>% 
+  group_by(Grupo_FIPE) %>% 
+  summarise(Qtd_media = mean(Qtd_produto), .groups = "drop")
 
-
-
-
+tbl.aux
 
 
 

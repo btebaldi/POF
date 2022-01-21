@@ -420,7 +420,13 @@ rm(list = c("tbl_grupos"))
 
 
 
+tbl.aux <- tbl_caderneta_coletiva %>% 
+  group_by(COD_UPA, NUM_DOM, Grupo_FIPE) %>% 
+  summarise(Qtd_produto = sum(QTD_FINAL), .groups = "drop") %>% 
+  group_by(Grupo_FIPE) %>% 
+  summarise(Qtd_media = mean(Qtd_produto), .groups = "drop")
 
+tbl.aux
 
 
 
