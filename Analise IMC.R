@@ -32,6 +32,7 @@ tbl_consumo_alimentar2 <- tbl_consumo_alimentar %>%
             Proteina = sum(PTN),
             Carbo = sum(CHOTOT),
             Fiber = sum(FIBRA),
+            Qtd_comida = sum(QTD),
             .groups = "drop")
 
 
@@ -70,6 +71,7 @@ tbl %>%
             Proteina_mu = mean(Proteina),
             Carbo_mu = mean(Carbo),
             Fiber_mu = mean(Fiber), 
+            Qtd_mu = mean(Qtd_comida),
             Qtd = n(),
             .groups = "drop")
 
